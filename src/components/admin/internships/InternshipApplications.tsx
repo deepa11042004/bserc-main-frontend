@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRightLeft,
   Download,
@@ -127,8 +127,10 @@ export default function InternshipApplications() {
   const [paymentStatusFilter, setPaymentStatusFilter] =
     useState<PaymentStatusFilter>("all");
   const [emailSearch, setEmailSearch] = useState("");
+  const [debouncedEmailSearch, setDebouncedEmailSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportAll, setExportAll] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
@@ -156,7 +158,7 @@ export default function InternshipApplications() {
     if (page !== 1) {
       setPage(1);
     }
-  }, [registrationTypeFilter, paymentStatusFilter, emailSearch]);
+  }, [registrationTypeFilter, paymentStatusFilter, debouncedEmailSearch]);
 
   useEffect(() => {
     let isMounted = true;
@@ -180,7 +182,7 @@ export default function InternshipApplications() {
         pageSize: String(pageSize),
         registrationType: registrationTypeFilter,
         paymentStatus: paymentStatusFilter,
-        emailSearch: emailSearch.trim(),
+        emailSearch: debouncedEmailSearch.trim(),
       });
 
       try {
@@ -275,7 +277,7 @@ export default function InternshipApplications() {
     pageSize,
     registrationTypeFilter,
     paymentStatusFilter,
-    emailSearch,
+    debouncedEmailSearch,
   ]);
 
   useEffect(() => {
@@ -289,6 +291,11 @@ export default function InternshipApplications() {
 
     return () => window.clearTimeout(timeoutId);
   }, [actionNotice]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedEmailSearch(emailSearch), 300);
+    return () => clearTimeout(timer);
+  }, [emailSearch]);
 
   useEffect(() => {
     setJumpPageInput("");
@@ -345,69 +352,60 @@ export default function InternshipApplications() {
   };
 
   const handleExport = async () => {
-    if (isExporting || isLoading) {
-      return;
-    }
-
-    if (filteredApplications.length === 0) {
-      const hasActiveFilters =
-        registrationTypeFilter !== "all"
-        || paymentStatusFilter !== "all"
-        || emailSearch.trim().length > 0;
-
-      setError(
-        !hasActiveFilters
-          ? "No internship applications available to export."
-          : "No applications available to export for the selected filters.",
-      );
-      return;
-    }
-
+    if (isExporting || isLoading) return;
     setError("");
     setIsExporting(true);
 
     try {
-      const XLSX = await import("xlsx");
+      let recordsToExport: InternshipApplication[];
 
-      const applicationRecords = filteredApplications.map((application) => ({
-        ...application,
-      }));
-      const { headers, rows } = buildDynamicExportRows(applicationRecords);
+      if (exportAll) {
+        const query = new URLSearchParams({
+          page: "1",
+          pageSize: "99999",
+          registrationType: registrationTypeFilter,
+          paymentStatus: paymentStatusFilter,
+          emailSearch: debouncedEmailSearch.trim(),
+        });
+        const response = await fetch(`/api/internship-registration/list?${query.toString()}`, {
+          method: "GET",
+          cache: "no-store",
+          credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!response.ok) throw new Error("Failed to fetch all records for export.");
+        const payload = (await response.json().catch(() => ({}))) as unknown;
+        recordsToExport = extractInternshipApplications(payload);
+      } else {
+        recordsToExport = filteredApplications;
+      }
 
-      if (rows.length === 0) {
-        setError("No internship applications available to export.");
+      if (recordsToExport.length === 0) {
+        setError(
+          registrationTypeFilter !== "all" || paymentStatusFilter !== "all" || debouncedEmailSearch.trim()
+            ? "No applications match the selected filters."
+            : "No internship applications available to export.",
+        );
         return;
       }
 
+      const XLSX = await import("xlsx");
+      const { headers, rows } = buildDynamicExportRows(recordsToExport.map((a) => ({ ...a })));
       const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
-      worksheet["!cols"] = headers.map((header) => ({
-        wch: Math.max(16, Math.min(42, header.length + 4)),
-      }));
-
+      worksheet["!cols"] = headers.map((h) => ({ wch: Math.max(16, Math.min(42, h.length + 4)) }));
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Internship Applications");
-
       const now = new Date();
-      const filename = `internship-applications-${registrationTypeFilter}-${paymentStatusFilter}-${now.getFullYear()}-${String(
-        now.getMonth() + 1,
-      ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(
-        now.getHours(),
-      ).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}.xlsx`;
-
+      const suffix = exportAll ? "-all" : "";
+      const filename = `internship-applications-${registrationTypeFilter}-${paymentStatusFilter}-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}${suffix}.xlsx`;
       XLSX.writeFile(workbook, filename);
     } catch (err) {
-      setError(
-        err instanceof Error && err.message
-          ? err.message
-          : "Unable to export internship applications.",
-      );
+      setError(err instanceof Error && err.message ? err.message : "Unable to export internship applications.");
     } finally {
       setIsExporting(false);
     }
   };
 
-  const totalApplications = useMemo(() => applications.length, [applications]);
-  const totalApplicationsAll = useMemo(() => totalCount, [totalCount]);
 
   const selectedPaymentStatus =
     (selectedApplication?.payment_status || "").trim().toLowerCase();
@@ -670,202 +668,200 @@ export default function InternshipApplications() {
       </Card>
 
       <Card className="bg-zinc-900 border-zinc-800">
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <CardHeader className="pb-0">
+          {/* Title row */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2.5">
               <CardTitle className="text-zinc-100 text-lg flex items-center gap-2">
                 <NotebookPen className="h-4 w-4 text-blue-400" />
                 Submitted Applications
               </CardTitle>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-zinc-400">Type:</span>
-                {(["all", "regular", "lateral"] as const).map((option) => {
-                  const label =
-                    option === "all"
-                      ? "All"
-                      : option === "regular"
-                      ? "General Internship"
-                      : "Lateral Internship";
-
-                  return (
-                    <button
-                      key={`type-${option}`}
-                      type="button"
-                      onClick={() => setRegistrationTypeFilter(option)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                        registrationTypeFilter === option
-                          ? "bg-cyan-500 text-black"
-                          : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-zinc-400">Payment:</span>
-                {(["all", "captured", "failed"] as const).map((option) => {
-                  const label = option === "all" ? "All" : option === "captured" ? "Captured" : "Failed";
-
-                  return (
-                    <button
-                      key={`payment-${option}`}
-                      type="button"
-                      onClick={() => setPaymentStatusFilter(option)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                        paymentStatusFilter === option
-                          ? "bg-cyan-500 text-black"
-                          : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="w-full sm:w-64">
-                <label
-                  htmlFor="internship-email-search"
-                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400"
-                >
-                  Search by Email
-                </label>
-                <input
-                  id="internship-email-search"
-                  type="text"
-                  value={emailSearch}
-                  onChange={(event) => setEmailSearch(event.target.value)}
-                  placeholder="Enter email"
-                  className="h-9 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="w-full sm:w-40">
-                <label
-                  htmlFor="internship-page-size"
-                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400"
-                >
-                  Page Size
-                </label>
-                <select
-                  id="internship-page-size"
-                  value={pageSize}
-                  onChange={(event) => {
-                    const nextSize = Number(event.target.value);
-                    if (Number.isFinite(nextSize) && nextSize > 0) {
-                      setPageSize(nextSize);
-                      setPage(1);
-                    }
-                  }}
-                  className="h-9 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 outline-none focus:border-blue-500"
-                >
-                  {[25, 50, 100].map((size) => (
-                    <option key={`page-size-${size}`} value={size}>
-                      {size} / page
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setRegistrationTypeFilter("all");
-                  setPaymentStatusFilter("all");
-                  setEmailSearch("");
-                  setJumpPageInput("");
-                }}
-                disabled={
-                  registrationTypeFilter === "all"
-                  && paymentStatusFilter === "all"
-                  && !emailSearch.trim()
-                }
-                className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
-              >
-                Clear
-              </Button>
+              <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs font-medium text-zinc-300">
+                {totalCount.toLocaleString()} total
+              </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <span className="text-xs text-zinc-400">Export All</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={exportAll}
+                  onClick={() => setExportAll((v) => !v)}
+                  className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${
+                    exportAll ? "bg-cyan-500" : "bg-zinc-700"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                      exportAll ? "translate-x-4" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </label>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleExport}
-                disabled={isLoading || isExporting || filteredApplications.length === 0}
+                disabled={isLoading || isExporting || (!exportAll && filteredApplications.length === 0)}
                 className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
               >
                 {isExporting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                     Exporting...
                   </>
                 ) : (
                   <>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
+                    <Download className="mr-1.5 h-3.5 w-3.5" />
+                    Export {exportAll ? "All" : "Page"}
                   </>
                 )}
               </Button>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-400">
-                <span>
-                  Showing {totalApplications} of {totalApplicationsAll}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setPage((previous) => Math.max(1, previous - 1))}
-                    disabled={isLoading || page <= 1}
-                    className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
-                  >
-                    Prev
-                  </Button>
-                  <span className="text-xs text-zinc-500">
-                    Page {page} of {totalPages}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setPage((previous) => Math.min(totalPages, previous + 1))}
-                    disabled={isLoading || page >= totalPages}
-                    className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
-                  >
-                    Next
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={1}
-                    max={totalPages}
-                    value={jumpPageInput}
-                    onChange={(event) => setJumpPageInput(event.target.value)}
-                    placeholder="Page"
-                    className="h-8 w-20 rounded-md border border-zinc-700 bg-zinc-900 px-2 text-xs text-zinc-100 outline-none focus:border-blue-500"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const parsed = Number(jumpPageInput);
-                      if (Number.isFinite(parsed)) {
-                        const clamped = Math.min(
-                          Math.max(1, Math.floor(parsed)),
-                          totalPages,
-                        );
-                        setPage(clamped);
-                      }
-                    }}
-                    disabled={isLoading || !jumpPageInput.trim()}
-                    className="text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
-                  >
-                    Go
-                  </Button>
-                </div>
-              </div>
+            </div>
+          </div>
+
+          {/* Filter bar */}
+          <div className="flex flex-wrap items-center gap-1.5 pb-3 border-b border-zinc-800">
+            <span className="text-xs font-medium text-zinc-500 mr-0.5 shrink-0">Type:</span>
+            {(["all", "regular", "lateral"] as const).map((opt) => (
+              <button
+                key={`type-${opt}`}
+                type="button"
+                onClick={() => setRegistrationTypeFilter(opt)}
+                className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${
+                  registrationTypeFilter === opt
+                    ? "bg-cyan-500 text-black"
+                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                }`}
+              >
+                {opt === "all" ? "All" : opt === "regular" ? "General" : "Lateral"}
+              </button>
+            ))}
+            <span className="mx-1 text-zinc-700">·</span>
+            <span className="text-xs font-medium text-zinc-500 mr-0.5 shrink-0">Payment:</span>
+            {(["all", "captured", "failed"] as const).map((opt) => (
+              <button
+                key={`pay-${opt}`}
+                type="button"
+                onClick={() => setPaymentStatusFilter(opt)}
+                className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${
+                  paymentStatusFilter === opt
+                    ? opt === "captured"
+                      ? "bg-emerald-600 text-white"
+                      : opt === "failed"
+                      ? "bg-rose-600 text-white"
+                      : "bg-cyan-500 text-black"
+                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                }`}
+              >
+                {opt === "all" ? "All" : opt === "captured" ? "Captured" : "Failed"}
+              </button>
+            ))}
+            <span className="flex-1 hidden sm:block" />
+            <div className="relative">
+              <input
+                type="text"
+                value={emailSearch}
+                onChange={(e) => setEmailSearch(e.target.value)}
+                placeholder="Search email…"
+                className="h-7 w-44 rounded-md border border-zinc-700 bg-zinc-950 px-2.5 text-xs text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-cyan-500"
+              />
+              {emailSearch && emailSearch !== debouncedEmailSearch && (
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              )}
+            </div>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                if (Number.isFinite(next) && next > 0) {
+                  setPageSize(next);
+                  setPage(1);
+                }
+              }}
+              className="h-7 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-100 outline-none focus:border-cyan-500"
+            >
+              {[25, 50, 100].map((s) => (
+                <option key={s} value={s}>
+                  {s} / page
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setRegistrationTypeFilter("all");
+                setPaymentStatusFilter("all");
+                setEmailSearch("");
+                setJumpPageInput("");
+              }}
+              disabled={
+                registrationTypeFilter === "all" &&
+                paymentStatusFilter === "all" &&
+                !emailSearch.trim()
+              }
+              className="h-7 px-2 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+            >
+              <X className="h-3 w-3 mr-0.5" />
+              Clear
+            </Button>
+          </div>
+
+          {/* Pagination row */}
+          <div className="flex flex-wrap items-center justify-between gap-2 py-2">
+            <span className="text-xs text-zinc-500">
+              Showing{" "}
+              <span className="font-medium text-zinc-300">{applications.length.toLocaleString()}</span>
+              {" "}of{" "}
+              <span className="font-medium text-zinc-300">{totalCount.toLocaleString()}</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={isLoading || page <= 1}
+                className="h-7 px-2.5 text-xs text-zinc-300 hover:bg-zinc-800"
+              >
+                ← Prev
+              </Button>
+              <span className="px-2 text-xs text-zinc-500">
+                {page} / {totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={isLoading || page >= totalPages}
+                className="h-7 px-2.5 text-xs text-zinc-300 hover:bg-zinc-800"
+              >
+                Next →
+              </Button>
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={jumpPageInput}
+                onChange={(e) => setJumpPageInput(e.target.value)}
+                placeholder="Go to"
+                className="ml-2 h-7 w-16 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-100 outline-none focus:border-cyan-500"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const parsed = Number(jumpPageInput);
+                  if (Number.isFinite(parsed)) {
+                    setPage(Math.min(Math.max(1, Math.floor(parsed)), totalPages));
+                  }
+                }}
+                disabled={isLoading || !jumpPageInput.trim()}
+                className="h-7 px-2.5 text-xs text-zinc-300 hover:bg-zinc-800"
+              >
+                Go
+              </Button>
             </div>
           </div>
         </CardHeader>
