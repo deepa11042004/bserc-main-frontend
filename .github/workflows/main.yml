@@ -59,6 +59,7 @@ jobs:
             # RUN WITH ENV (OPTIONAL BUT SAFE ✅)
             docker run -d -p 3000:3000 \
             -e API_URL=${{ secrets.API_URL }} \
+            -e EMAIL_API_URL=${{ secrets.EMAIL_API_URL }} \
             --name nextjs-app \
             ${{ secrets.DOCKER_USERNAME }}/nextjs-bserc:${{ github.sha }}
 
