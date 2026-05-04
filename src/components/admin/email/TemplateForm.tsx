@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { Eye, Loader2, Save } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
+import { Eye, FileText, Loader2, Paperclip, Save, Trash2, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/Button";
 import { emailApi } from "@/services/emailServer";
-import type { Template, TemplateInput } from "@/types/emailServer";
+import { useEmailQuery } from "@/hooks/useEmailQuery";
+import type { Template, TemplateAttachment, TemplateInput } from "@/types/emailServer";
 import { EmailPreviewModal } from "./EmailPreviewModal";
 
 interface TemplateFormProps {
@@ -37,6 +38,18 @@ export function TemplateForm({ initial, onSaved, onError }: TemplateFormProps) {
   });
   const [submitting, setSubmitting] = useState(false);
   const [preview, setPreview] = useState<{ subject: string; html: string; text: string | null; missing: string[] } | null>(null);
+
+  // Attachments (only available when editing an existing template)
+  const {
+    data: attachments,
+    loading: loadingAttachments,
+    refresh: refreshAttachments,
+  } = useEmailQuery(
+    () => (initial ? emailApi.listAttachments(initial.id) : Promise.resolve([] as TemplateAttachment[])),
+    [initial?.id]
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   function update<K extends keyof TemplateInput>(key: K, value: TemplateInput[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -83,6 +96,41 @@ export function TemplateForm({ initial, onSaved, onError }: TemplateFormProps) {
       onError?.(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !initial) return;
+    e.target.value = "";
+    setUploadingFile(true);
+    try {
+      const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1] ?? "");
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      await emailApi.addAttachment(initial.id, {
+        filename: file.name,
+        contentType: file.type || "application/octet-stream",
+        data,
+      });
+      await refreshAttachments();
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingFile(false);
+    }
+  }
+
+  async function handleDeleteAttachment(att: TemplateAttachment) {
+    if (!initial) return;
+    try {
+      await emailApi.deleteAttachment(initial.id, att.id);
+      await refreshAttachments();
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : "Delete failed");
     }
   }
 
@@ -172,6 +220,81 @@ export function TemplateForm({ initial, onSaved, onError }: TemplateFormProps) {
               />
             </CardContent>
           </Card>
+
+          {/* Attachments — only on edit */}
+          {initial ? (
+            <Card className="bg-[#0F0F12] ring-[#1F1F23]">
+              <CardHeader className="border-b border-[#1F1F23] pb-3">
+                <CardTitle className="flex items-center justify-between text-white">
+                  <span className="flex items-center gap-2">
+                    <Paperclip className="h-4 w-4 text-sky-300" /> Attachments
+                  </span>
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#1F1F23] bg-[#0a0c16] px-2.5 py-1.5 text-xs font-normal text-gray-300 hover:bg-[#1F1F23]">
+                    {uploadingFile ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="h-3.5 w-3.5" />
+                    )}
+                    Upload file
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      disabled={uploadingFile}
+                    />
+                  </label>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="py-3">
+                {loadingAttachments ? (
+                  <p className="text-xs text-gray-500">Loading…</p>
+                ) : !attachments?.length ? (
+                  <p className="text-xs text-gray-500">
+                    No attachments yet. Uploaded files are stored in S3 and sent with every email.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {attachments.map((att) => (
+                      <li
+                        key={att.id}
+                        className="flex items-center justify-between rounded-md border border-[#1F1F23] px-3 py-2"
+                      >
+                        <a
+                          href={att.download_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-sm text-sky-300 hover:underline"
+                        >
+                          <FileText className="h-4 w-4 flex-shrink-0" />
+                          <span>{att.filename}</span>
+                          <span className="text-[11px] text-gray-500">
+                            ({(att.size_bytes / 1024).toFixed(1)} KB)
+                          </span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAttachment(att)}
+                          className="rounded p-1 text-gray-500 hover:bg-rose-500/10 hover:text-rose-400"
+                          aria-label="Remove attachment"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-2 text-[11px] text-gray-600">
+                  Accepted: images, PDF, Office docs, ZIP · Max ~15 MB per file (base64 JSON limit)
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <p className="rounded-md border border-dashed border-[#1F1F23] px-4 py-3 text-xs text-gray-500">
+              Save the template first, then open it in edit mode to add attachments.
+            </p>
+          )}
 
           <div className="flex items-center justify-end gap-2">
             <Button

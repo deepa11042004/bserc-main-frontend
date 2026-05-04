@@ -11,13 +11,14 @@ import type {
   CampaignCreateResponse,
   CampaignDbInput,
   CampaignQueryInput,
+  SenderIdentity,
   Template,
 } from "@/types/emailServer";
 
 type Source = "API" | "DB_TABLE" | "SQL_QUERY";
 
 interface CampaignFormProps {
-  onCreated: (result: CampaignCreateResponse) => void;
+  onCreated: (result: CampaignCreateResponse, campaignName: string) => void;
   onError: (message: string) => void;
 }
 
@@ -39,9 +40,13 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
   const { data: templates, loading: loadingTemplates } = useEmailQuery(
     () => emailApi.listTemplates({ status: "ACTIVE", limit: 200 })
   );
+  const { data: senders, loading: loadingSenders } = useEmailQuery(
+    () => emailApi.listSenders(true)
+  );
 
   const [campaignName, setCampaignName] = useState("");
   const [templateId, setTemplateId] = useState<number | "">("");
+  const [senderId, setSenderId] = useState<number | "">("");
   const [fromEmail, setFromEmail] = useState("");
   const [replyTo, setReplyTo] = useState("");
   const [globalVars, setGlobalVars] = useState<Array<{ key: string; value: string }>>([
@@ -69,13 +74,16 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
     [templates, templateId]
   );
 
+  // Auto-select default sender when senders load
   useEffect(() => {
-    // Auto-suggest from-email from env if user clears it
-    if (!fromEmail && typeof window !== "undefined") {
-      const suggested = window.localStorage.getItem("emailServer.lastFrom");
-      if (suggested) setFromEmail(suggested);
+    if (!senders?.length || senderId !== "") return;
+    const defaultSender = senders.find((s) => s.is_default) ?? senders[0];
+    if (defaultSender) {
+      setSenderId(defaultSender.id);
+      setFromEmail(defaultSender.email);
+      setReplyTo(defaultSender.reply_to ?? "");
     }
-  }, [fromEmail]);
+  }, [senders, senderId]);
 
   function addRow() {
     setRecipients((r) => [...r, emptyRow()]);
@@ -139,9 +147,6 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
       return;
     }
     setSubmitting(true);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("emailServer.lastFrom", fromEmail);
-    }
     try {
       const base = {
         campaignName,
@@ -186,7 +191,7 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
         };
         result = await emailApi.sendFromQuery(payload);
       }
-      onCreated(result);
+      onCreated(result, campaignName);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Send failed");
     } finally {
@@ -241,25 +246,73 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
           <CardTitle className="text-white">2. Sender</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 py-3 sm:grid-cols-2">
-          <Field label="From email" required hint="Must be SES-verified">
-            <input
-              required
-              type="email"
-              value={fromEmail}
-              onChange={(e) => setFromEmail(e.target.value)}
-              placeholder="bulkemail@peltown.com"
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Reply-to (optional)">
-            <input
-              type="email"
-              value={replyTo}
-              onChange={(e) => setReplyTo(e.target.value)}
-              placeholder="support@bserc.org"
-              className={inputCls}
-            />
-          </Field>
+          {senders && senders.length > 0 ? (
+            <>
+              <Field label="From address" required hint="Configured sender identities">
+                <select
+                  required
+                  value={senderId}
+                  onChange={(e) => {
+                    const id = Number(e.target.value);
+                    setSenderId(id);
+                    const s = senders.find((x) => x.id === id);
+                    if (s) {
+                      setFromEmail(s.email);
+                      setReplyTo(s.reply_to ?? "");
+                    }
+                  }}
+                  className={inputCls}
+                  disabled={loadingSenders}
+                >
+                  <option value="">— Choose sender —</option>
+                  {senders.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.display_name} &lt;{s.email}&gt;
+                      {s.is_default ? " ★" : ""}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Reply-To" hint="Pre-filled from sender; override if needed">
+                <input
+                  type="email"
+                  value={replyTo}
+                  onChange={(e) => setReplyTo(e.target.value)}
+                  placeholder="support@bserc.org"
+                  className={inputCls}
+                />
+              </Field>
+            </>
+          ) : (
+            <>
+              <Field label="From email" required hint="Must be SES-verified">
+                <input
+                  required
+                  type="email"
+                  value={fromEmail}
+                  onChange={(e) => setFromEmail(e.target.value)}
+                  placeholder="bulkemail@peltown.com"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Reply-to (optional)">
+                <input
+                  type="email"
+                  value={replyTo}
+                  onChange={(e) => setReplyTo(e.target.value)}
+                  placeholder="support@bserc.org"
+                  className={inputCls}
+                />
+              </Field>
+              <p className="col-span-2 text-xs text-amber-400">
+                No senders configured yet.{" "}
+                <a href="/admin/email/senders" className="underline hover:text-amber-300">
+                  Add one in Sender Identities
+                </a>{" "}
+                to use a dropdown here.
+              </p>
+            </>
+          )}
         </CardContent>
       </Card>
 

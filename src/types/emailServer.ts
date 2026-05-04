@@ -210,3 +210,32 @@ export interface FailedEmailsResponse {
   items: Array<CampaignRecipient & { campaign_name: string }>;
   total: number;
 }
+
+export interface SenderIdentity {
+  id: number;
+  display_name: string;
+  email: string;
+  reply_to: string | null;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SenderInput {
+  displayName: string;
+  email: string;
+  replyTo?: string | null;
+  isDefault?: boolean;
+}
+
+export interface TemplateAttachment {
+  id: number;
+  template_id: number;
+  filename: string;
+  s3_key: string;
+  content_type: string;
+  size_bytes: number;
+  created_at: string;
+  download_url: string;
+}
