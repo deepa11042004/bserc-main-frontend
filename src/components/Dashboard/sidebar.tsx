@@ -16,6 +16,11 @@ import {
   Home,
   GraduationCap,
   Building2,
+  Mail,
+  FileText,
+  Send,
+  XCircle,
+  Activity,
 } from "lucide-react"
 
 import Link from "next/link"
@@ -223,6 +228,54 @@ export default function Sidebar() {
                     isActive={normalizedPath === "/admin/institutional-applications"}
                   >
                     Institutional Applications
+                  </NavItem>
+                </div>
+              </div>
+
+              <div>
+                <div className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Email Notifications
+                </div>
+                <div className="space-y-1">
+                  <NavItem
+                    href="/admin/email"
+                    icon={Mail}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath === "/admin/email"}
+                  >
+                    Email Dashboard
+                  </NavItem>
+                  <NavItem
+                    href="/admin/email/templates"
+                    icon={FileText}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath.startsWith("/admin/email/templates")}
+                  >
+                    Templates
+                  </NavItem>
+                  <NavItem
+                    href="/admin/email/campaigns"
+                    icon={Send}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath.startsWith("/admin/email/campaigns")}
+                  >
+                    Campaigns
+                  </NavItem>
+                  <NavItem
+                    href="/admin/email/failed-emails"
+                    icon={XCircle}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath === "/admin/email/failed-emails"}
+                  >
+                    Failed Emails
+                  </NavItem>
+                  <NavItem
+                    href="/admin/email/queue-health"
+                    icon={Activity}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath === "/admin/email/queue-health"}
+                  >
+                    Queue Health
                   </NavItem>
                 </div>
               </div>
