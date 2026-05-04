@@ -30,6 +30,9 @@ const HOP_BY_HOP = new Set([
   "content-length",
 ]);
 
+const REQUEST_HEADER_BLOCKLIST = new Set(["accept-encoding"]);
+const RESPONSE_HEADER_BLOCKLIST = new Set(["content-encoding"]);
+
 async function forward(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
   const segments = Array.isArray(path) ? path.join("/") : "";
@@ -39,6 +42,7 @@ async function forward(req: NextRequest, ctx: { params: Promise<{ path: string[]
   const headers = new Headers();
   req.headers.forEach((value, key) => {
     if (HOP_BY_HOP.has(key.toLowerCase())) return;
+    if (REQUEST_HEADER_BLOCKLIST.has(key.toLowerCase())) return;
     headers.set(key, value);
   });
 
@@ -69,6 +73,7 @@ async function forward(req: NextRequest, ctx: { params: Promise<{ path: string[]
   const responseHeaders = new Headers();
   upstream.headers.forEach((value, key) => {
     if (HOP_BY_HOP.has(key.toLowerCase())) return;
+    if (RESPONSE_HEADER_BLOCKLIST.has(key.toLowerCase())) return;
     responseHeaders.set(key, value);
   });
   const buf = await upstream.arrayBuffer();
