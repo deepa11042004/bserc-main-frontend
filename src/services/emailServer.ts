@@ -14,8 +14,11 @@ import type {
   FailedEmailsResponse,
   QueueHealth,
   RecipientStatus,
+  SenderIdentity,
+  SenderInput,
   SuppressionEntry,
   Template,
+  TemplateAttachment,
   TemplateInput,
   TemplatePreview,
 } from "@/types/emailServer";
@@ -230,5 +233,41 @@ export const emailApi = {
       `/admin/retry-failed/${campaignId}`,
       { method: "POST" }
     );
+  },
+
+  // --- senders ---
+  listSenders(activeOnly = false) {
+    return request<SenderIdentity[]>(`/senders${activeOnly ? "?active=true" : ""}`);
+  },
+  createSender(input: SenderInput) {
+    return request<SenderIdentity>("/senders", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+  updateSender(id: number, input: Partial<SenderInput & { isActive: boolean }>) {
+    return request<SenderIdentity>(`/senders/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+    });
+  },
+  deleteSender(id: number) {
+    return request<void>(`/senders/${id}`, { method: "DELETE" });
+  },
+
+  // --- template attachments ---
+  listAttachments(templateId: number) {
+    return request<TemplateAttachment[]>(`/templates/${templateId}/attachments`);
+  },
+  addAttachment(templateId: number, input: { filename: string; contentType: string; data: string }) {
+    return request<TemplateAttachment>(`/templates/${templateId}/attachments`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+  deleteAttachment(templateId: number, attachmentId: number) {
+    return request<void>(`/templates/${templateId}/attachments/${attachmentId}`, {
+      method: "DELETE",
+    });
   },
 };

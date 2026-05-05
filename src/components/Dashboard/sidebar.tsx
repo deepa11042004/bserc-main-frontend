@@ -278,6 +278,14 @@ export default function Sidebar() {
                   >
                     Queue Health
                   </NavItem>
+                  <NavItem
+                    href="/admin/email/senders"
+                    icon={Mail}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath === "/admin/email/senders"}
+                  >
+                    Sender Identities
+                  </NavItem>
                 </div>
               </div>
 

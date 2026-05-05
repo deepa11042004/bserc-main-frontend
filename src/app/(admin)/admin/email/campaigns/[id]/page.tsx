@@ -94,12 +94,15 @@ export default function CampaignDetailPage({
   const counters = stats.data?.counters;
   const total = counters?.total ?? 0;
   const sent = counters?.sent ?? 0;
+  const delivered = counters?.delivered ?? 0;
   const failed = counters?.failed ?? 0;
   const pct = total ? Math.min(100, Math.round((sent / total) * 100)) : 0;
+  const deliveryPct = sent > 0 ? Math.round((delivered / sent) * 100) : 0;
   const canPause = status === "QUEUED" || status === "RUNNING";
   const canResume = status === "PAUSED";
   const canCancel = status === "QUEUED" || status === "RUNNING" || status === "PAUSED";
   const canRetry = (failed ?? 0) > 0;
+  const isCompleted = status === "COMPLETED";
 
   return (
     <>
@@ -161,6 +164,26 @@ export default function CampaignDetailPage({
       >
         {stats.error && <ErrorState message={stats.error.message} />}
 
+        {/* Completion celebration banner */}
+        {isCompleted && (
+          <div className="relative overflow-hidden rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/60 via-[#0d1a14] to-sky-950/60 px-6 py-5">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(52,211,153,0.12),transparent_70%)]" />
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/15 ring-1 ring-emerald-500/30">
+                <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-white">Campaign completed successfully</p>
+                <p className="text-sm text-gray-400">
+                  {sent.toLocaleString()} emails sent
+                  {delivered > 0 && ` · ${delivered.toLocaleString()} confirmed delivered (${deliveryPct}%)`}
+                  {failed > 0 && ` · ${failed} failed`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <StatsGrid>
           <StatCard label="Total" value={total} icon={Mail} />
           <StatCard label="Sent" value={sent} icon={Send} tone="success" />
@@ -181,21 +204,48 @@ export default function CampaignDetailPage({
         </StatsGrid>
 
         <Card className="bg-[#0F0F12] ring-[#1F1F23]">
-          <CardContent className="space-y-2 py-3">
-            <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>Progress</span>
-              <span className="tabular-nums">
-                {sent}/{total} ({pct}%)
+          <CardContent className="space-y-3 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-white">Sending progress</span>
+                {(status === "RUNNING" || status === "QUEUED") && (
+                  <span className="flex items-center gap-1 text-[11px] text-sky-400">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-400" />
+                    </span>
+                    Live
+                  </span>
+                )}
+              </div>
+              <span className="text-sm font-semibold tabular-nums text-white">
+                {sent.toLocaleString()} / {total.toLocaleString()}
+                <span className="ml-1 text-xs font-normal text-gray-500">({pct}%)</span>
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-[#1F1F23]">
-              <div className="h-full bg-sky-400 transition-all" style={{ width: `${pct}%` }} />
+
+            {/* Gradient progress bar */}
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#1a1a24]">
+              <div
+                className={`h-full rounded-full transition-[width] duration-700 ease-out ${
+                  isCompleted
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-400"
+                    : status === "FAILED" || status === "CANCELLED"
+                      ? "bg-rose-500"
+                      : "bg-gradient-to-r from-sky-500 to-indigo-500"
+                }`}
+                style={{ width: `${pct}%` }}
+              />
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-2 text-[11px] text-gray-500 sm:grid-cols-4">
+
+            <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-500 sm:grid-cols-4">
               <div>Started: {stats.data?.startedAt ? formatIST(stats.data.startedAt) : "—"}</div>
-              <div>Completed: {stats.data?.completedAt ? formatIST(stats.data.completedAt) : "—"}</div>
-              <div>Queued in DB: {counters?.queued ?? 0}</div>
-              <div>Suppressed: {counters?.suppressed ?? 0}</div>
+              <div>
+                Completed:{" "}
+                {stats.data?.completedAt ? formatIST(stats.data.completedAt) : "—"}
+              </div>
+              <div>Queued in DB: {(counters?.queued ?? 0).toLocaleString()}</div>
+              <div>Suppressed: {(counters?.suppressed ?? 0).toLocaleString()}</div>
             </div>
           </CardContent>
         </Card>
