@@ -54,6 +54,7 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
   ]);
   const [source, setSource] = useState<Source>("API");
   const [submitting, setSubmitting] = useState(false);
+  const [csvSkipped, setCsvSkipped] = useState(0);
 
   // API recipients
   const [recipients, setRecipients] = useState<RecipientRow[]>([emptyRow()]);
@@ -95,6 +96,8 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
     setRecipients((r) => r.filter((_, i) => i !== idx));
   }
 
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -113,10 +116,14 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
       const fnIdx = idx("firstname") >= 0 ? idx("firstname") : idx("first_name");
       const lnIdx = idx("lastname") >= 0 ? idx("lastname") : idx("last_name");
       const rows: RecipientRow[] = [];
+      let skipped = 0;
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i]!.split(",").map((s) => s.trim());
         const email = cols[emailIdx] ?? "";
-        if (!email) continue;
+        if (!email || !EMAIL_RE.test(email)) {
+          if (email) skipped++;
+          continue;
+        }
         rows.push({
           email,
           firstName: fnIdx >= 0 ? (cols[fnIdx] ?? "") : "",
@@ -125,6 +132,7 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
         });
       }
       if (rows.length) setRecipients(rows);
+      setCsvSkipped(skipped);
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -164,7 +172,7 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
             lastName: r.lastName.trim() || null,
             data: r.data.trim() ? safeParseJson(r.data) : undefined,
           }))
-          .filter((r) => r.email);
+          .filter((r) => r.email && EMAIL_RE.test(r.email));
         if (!cleaned.length) {
           onError("Add at least one recipient");
           setSubmitting(false);
@@ -348,7 +356,12 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
                 <div className="flex items-center gap-2">
                   <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#1F1F23] bg-[#0a0c16] px-2.5 py-1 text-xs text-gray-300 hover:bg-[#1F1F23]">
                     <Upload className="h-3 w-3" /> Upload CSV
-                    <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCsvUpload}
+                      className="hidden"
+                    />
                   </label>
                   <Button
                     type="button"
@@ -361,6 +374,12 @@ export function CampaignForm({ onCreated, onError }: CampaignFormProps) {
                   </Button>
                 </div>
               </div>
+              {csvSkipped > 0 && (
+                <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/8 px-3 py-2 text-xs text-amber-300">
+                  <span className="font-semibold">{csvSkipped} row{csvSkipped === 1 ? "" : "s"} skipped</span>
+                  — invalid email format (plain text, missing @, etc.). These will not be sent to.
+                </div>
+              )}
               <div className="overflow-x-auto rounded-md border border-[#1F1F23]">
                 <table className="w-full text-xs">
                   <thead className="bg-[#0a0c16] text-gray-400">
