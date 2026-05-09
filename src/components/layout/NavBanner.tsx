@@ -4,7 +4,7 @@ const NavBanner = () => {
   return (
     <div>
       <Image
-        src="/img/NavBar_Banner.png"
+        src="/img/NavBar_Banner.jpeg"
         alt="NavBanner"
         priority
         loading="eager"
