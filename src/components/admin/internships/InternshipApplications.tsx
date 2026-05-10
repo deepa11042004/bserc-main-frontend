@@ -41,7 +41,7 @@ import {
 } from "@/services/internshipRegistration";
 
 type RegistrationTypeFilter = "all" | "regular" | "lateral";
-type PaymentStatusFilter = "all" | "failed" | "captured";
+type PaymentStatusFilter = "all" | "failed" | "captured" | "pending";
 type FeeStatus = { type: "success" | "error"; message: string };
 type ActiveModalType = "view" | "delete" | "transfer";
 type TransferPaymentStatus = "failed" | "captured";
@@ -739,7 +739,7 @@ export default function InternshipApplications() {
             ))}
             <span className="mx-1 text-zinc-700">·</span>
             <span className="text-xs font-medium text-zinc-500 mr-0.5 shrink-0">Payment:</span>
-            {(["all", "captured", "failed"] as const).map((opt) => (
+            {(["all", "captured", "pending", "failed"] as const).map((opt) => (
               <button
                 key={`pay-${opt}`}
                 type="button"
@@ -750,11 +750,13 @@ export default function InternshipApplications() {
                       ? "bg-emerald-600 text-white"
                       : opt === "failed"
                       ? "bg-rose-600 text-white"
+                      : opt === "pending"
+                      ? "bg-amber-500 text-black"
                       : "bg-cyan-500 text-black"
                     : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
                 }`}
               >
-                {opt === "all" ? "All" : opt === "captured" ? "Captured" : "Failed"}
+                {opt === "all" ? "All" : opt === "captured" ? "Captured" : opt === "pending" ? "Pending" : "Failed"}
               </button>
             ))}
             <span className="flex-1 hidden sm:block" />
