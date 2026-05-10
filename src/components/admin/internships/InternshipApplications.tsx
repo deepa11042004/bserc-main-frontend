@@ -128,6 +128,8 @@ export default function InternshipApplications() {
     useState<PaymentStatusFilter>("all");
   const [emailSearch, setEmailSearch] = useState("");
   const [debouncedEmailSearch, setDebouncedEmailSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportAll, setExportAll] = useState(false);
@@ -158,7 +160,7 @@ export default function InternshipApplications() {
     if (page !== 1) {
       setPage(1);
     }
-  }, [registrationTypeFilter, paymentStatusFilter, debouncedEmailSearch]);
+  }, [registrationTypeFilter, paymentStatusFilter, debouncedEmailSearch, startDate, endDate]);
 
   useEffect(() => {
     let isMounted = true;
@@ -183,6 +185,8 @@ export default function InternshipApplications() {
         registrationType: registrationTypeFilter,
         paymentStatus: paymentStatusFilter,
         emailSearch: debouncedEmailSearch.trim(),
+        startDate: startDate.trim(),
+        endDate: endDate.trim(),
       });
 
       try {
@@ -278,6 +282,8 @@ export default function InternshipApplications() {
     registrationTypeFilter,
     paymentStatusFilter,
     debouncedEmailSearch,
+    startDate,
+    endDate,
   ]);
 
   useEffect(() => {
@@ -365,6 +371,8 @@ export default function InternshipApplications() {
           registrationType: registrationTypeFilter,
           paymentStatus: paymentStatusFilter,
           emailSearch: debouncedEmailSearch.trim(),
+          startDate: startDate.trim(),
+          endDate: endDate.trim(),
         });
         const response = await fetch(`/api/internship-registration/list?${query.toString()}`, {
           method: "GET",
@@ -759,6 +767,23 @@ export default function InternshipApplications() {
                 {opt === "all" ? "All" : opt === "captured" ? "Captured" : opt === "pending" ? "Pending" : "Failed"}
               </button>
             ))}
+            <span className="mx-1 text-zinc-700">·</span>
+            <span className="text-xs font-medium text-zinc-500 mr-0.5 shrink-0">From:</span>
+            <input
+              type="date"
+              value={startDate}
+              max={endDate || undefined}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="h-7 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-100 outline-none focus:border-cyan-500 [color-scheme:dark]"
+            />
+            <span className="text-xs font-medium text-zinc-500 shrink-0">To:</span>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate || undefined}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="h-7 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-100 outline-none focus:border-cyan-500 [color-scheme:dark]"
+            />
             <span className="flex-1 hidden sm:block" />
             <div className="relative">
               <input
@@ -796,12 +821,16 @@ export default function InternshipApplications() {
                 setRegistrationTypeFilter("all");
                 setPaymentStatusFilter("all");
                 setEmailSearch("");
+                setStartDate("");
+                setEndDate("");
                 setJumpPageInput("");
               }}
               disabled={
                 registrationTypeFilter === "all" &&
                 paymentStatusFilter === "all" &&
-                !emailSearch.trim()
+                !emailSearch.trim() &&
+                !startDate &&
+                !endDate
               }
               className="h-7 px-2 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
             >
