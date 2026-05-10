@@ -308,7 +308,7 @@ export default function Navbar() {
             <span className="h-2 w-2 rounded-full bg-red-300 animate-pulse inline-block" />
             <span className="uppercase tracking-wide text-red-200 text-xs font-bold">Live Now</span>
           </span>
-          <span>National Technology Day — Advanced Drone Technology ( Live on YouTube )</span>
+          <span>National Technology Day — Advanced Drone Technology ( Live on YouTube on 11th May, 10AM onwards )</span>
           <a
             href="https://www.youtube.com/live/oNB4W94ftuk"
             target="_blank"
