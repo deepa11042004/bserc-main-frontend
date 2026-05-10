@@ -361,8 +361,7 @@ export default function InternshipApplications() {
 
       if (exportAll) {
         const query = new URLSearchParams({
-          page: "1",
-          pageSize: "99999",
+          exportAll: "true",
           registrationType: registrationTypeFilter,
           paymentStatus: paymentStatusFilter,
           emailSearch: debouncedEmailSearch.trim(),
