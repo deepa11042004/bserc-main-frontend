@@ -43,7 +43,7 @@ export default function HomePage() {
             <span className="text-red-200 text-xs font-bold uppercase tracking-widest">Live Now</span>
           </span>
           <span className="text-white font-semibold text-lg text-center">
-            National Technology Day — Advanced Drone Technology ( Live on YouTube )
+            National Technology Day — Advanced Drone Technology ( Live on YouTube on 11th May, 10AM onwards )
           </span>
           <span className="inline-flex items-center gap-2 bg-white text-red-700 px-5 py-2 rounded-full font-bold text-base shadow-lg hover:bg-red-50 transition-colors">
             ▶ Watch &amp; Subscribe
