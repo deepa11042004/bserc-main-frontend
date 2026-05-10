@@ -40,13 +40,13 @@ export default function HomePage() {
         >
           <span className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-full bg-red-300 animate-pulse inline-block" />
-            <span className="text-red-200 text-xs font-bold uppercase tracking-widest">Live Webinar</span>
+            <span className="text-red-200 text-xs font-bold uppercase tracking-widest">Live Now</span>
           </span>
           <span className="text-white font-semibold text-lg text-center">
-            Def-Space Education Live Session — Happening Now!
+            National Technology Day — Advanced Drone Technology ( Live on YouTube )
           </span>
           <span className="inline-flex items-center gap-2 bg-white text-red-700 px-5 py-2 rounded-full font-bold text-base shadow-lg hover:bg-red-50 transition-colors">
-            ▶ Watch on YouTube
+            ▶ Watch &amp; Subscribe
           </span>
         </a>
       </div>
