@@ -303,6 +303,21 @@ export default function Navbar() {
             Click here
           </Link>
         </div>
+        <div className="w-full bg-red-700 text-white text-center px-4 py-2 text-sm sm:text-base font-semibold flex flex-wrap items-center justify-center gap-2">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-red-300 animate-pulse inline-block" />
+            <span className="uppercase tracking-wide text-red-200 text-xs font-bold">Live Now</span>
+          </span>
+          <span>Join our Live Webinar — Def-Space Education Session</span>
+          <a
+            href="https://www.youtube.com/live/oNB4W94ftuk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 bg-white text-red-700 px-3 py-0.5 rounded-full font-bold text-sm hover:bg-red-50 transition-colors"
+          >
+            ▶ Watch on YouTube
+          </a>
+        </div>
         <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-[70px]">
           {/* Logo Left */}
 
