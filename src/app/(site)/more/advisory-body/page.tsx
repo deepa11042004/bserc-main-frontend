@@ -1,5 +1,6 @@
 "use client";
 import HeroBanner from "@/components/layout/Banner";
+import Link from "next/link";
 
 // types/advisory.ts
 export interface AdvisoryMember {
@@ -145,7 +146,7 @@ const advisoryMembers: AdvisoryMember[] = [
   },
 ];
 
-export default function AdvisoryBoard( ) {
+export default function AdvisoryBoard() {
   return (
     <div className="bg-black">
       <HeroBanner
@@ -211,12 +212,12 @@ export default function AdvisoryBoard( ) {
               advisory board.
             </p>
 
-            <button
-              type="button"               
+            <Link
+              href="/more/advisory-body/apply"
               className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
             >
               Apply for Advisory Board
-            </button>
+            </Link>
           </div>
         </div>
       </div>
