@@ -90,7 +90,9 @@ function normalizeSlide(item: unknown): HeroSlide | null {
     return null;
   }
 
-  const mediaUrl = `/api/hero-slides/${id}/media`;
+  // Prefer the URL provided by the API; fall back to the canonical media endpoint
+  const backendMediaUrl = toText(row.media_url);
+  const mediaUrl = backendMediaUrl || `/api/hero-slides/${id}/media`;
 
   return {
     id,
