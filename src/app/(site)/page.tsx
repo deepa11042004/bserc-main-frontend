@@ -31,24 +31,33 @@ export default function HomePage() {
           </button>
         </a>
       </div>
-      <div className="w-full bg-gradient-to-r from-red-800 via-red-700 to-red-800 py-5 px-4">
-        <a
-          href="https://www.youtube.com/live/oNB4W94ftuk"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex flex-wrap items-center justify-center gap-4"
-        >
-          <span className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-red-300 animate-pulse inline-block" />
-            <span className="text-red-200 text-xs font-bold uppercase tracking-widest">Live Now</span>
-          </span>
-          <span className="text-white font-semibold text-lg text-center">
-            National Technology Day — Advanced Drone Technology ( Live on YouTube on 11th May, 10AM onwards )
-          </span>
-          <span className="inline-flex items-center gap-2 bg-white text-red-700 px-5 py-2 rounded-full font-bold text-base shadow-lg hover:bg-red-50 transition-colors">
-            ▶ Watch &amp; Subscribe
-          </span>
-        </a>
+      <div className="w-full bg-gradient-to-r from-indigo-950 via-indigo-900 to-indigo-950 py-5 px-4">
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-white font-bold text-lg sm:text-xl text-center">
+            🎓 National Technology Day — Advanced Drone Technology
+          </p>
+          <p className="text-indigo-300 text-sm text-center">
+            Missed the session? Share your feedback or watch the full recording below.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-1">
+            <a
+              href="https://forms.gle/5eE7yfZYDLgWqbdb8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-lg transition-colors"
+            >
+              📝 Feedback Form — Click Here
+            </a>
+            <a
+              href="https://www.youtube.com/live/oNB4W94ftuk?si=OmFKbBK10JSQBQiD"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-lg transition-colors"
+            >
+              ▶ Recorded Session — Click Here
+            </a>
+          </div>
+        </div>
       </div>
       <Stats />
       <PMVision />
