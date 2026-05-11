@@ -1,16 +1,7 @@
- 
+import AdvisoryRequests from "@/components/admin/advisory/AdvisoryRequests";
 
- 
-
-const page = () => {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-white">Applications</h1>
-      
-    </div>
-  )
+export default function AdvisoryRequestPage() {
+  return <AdvisoryRequests />;
 }
-
-export default page
 
 

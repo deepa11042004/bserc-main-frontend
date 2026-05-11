@@ -1,20 +1,61 @@
 "use client";
+import { Loader2 } from "lucide-react";
 import HeroBanner from "@/components/layout/Banner";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { AdvisoryProfile } from "@/types/advisory";
 
-// types/advisory.ts
-export interface AdvisoryMember {
-  id: string;
+type AdvisoryCardItem = {
+  id: number;
   name: string;
   role: string;
   affiliation: string;
-  bio?: string;
-  socialLinks?: {
-    linkedin?: string;
-    twitter?: string;
-    email?: string;
-  };
-  onApplyClick?: () => void;
+  bio: string | null;
+};
+
+function getApiMessage(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+
+  if (typeof record.message === "string" && record.message.trim()) {
+    return record.message;
+  }
+
+  if (typeof record.error === "string" && record.error.trim()) {
+    return record.error;
+  }
+
+  return null;
+}
+
+function toAdvisoryItems(payload: unknown): AdvisoryCardItem[] {
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+
+  const record = payload as { advisories?: unknown };
+
+  if (!Array.isArray(record.advisories)) {
+    return [];
+  }
+
+  return record.advisories
+    .filter(
+      (item): item is AdvisoryProfile =>
+        Boolean(item)
+        && typeof item === "object"
+        && Number.isInteger(Number((item as AdvisoryProfile).id)),
+    )
+    .map((item) => ({
+      id: Number(item.id),
+      name: item.full_name || `Advisor ${item.id}`,
+      role: item.designation || "Advisory Member",
+      affiliation: item.organization_institution || "-",
+      bio: item.professional_expertise || null,
+    }));
 }
 
 // Generate initials from full name (first + last name)
@@ -65,88 +106,62 @@ function InitialsAvatar({ name }: { name: string }) {
   );
 }
 
-const advisoryMembers: AdvisoryMember[] = [
-  {
-    id: "1",
-    name: "Ramesh Gorantala",
-    role: "Division Head (Retd) / Governing Council Member",
-    affiliation: "ISRO / IETE",
-  },
-  {
-    id: "2",
-    name: "Aman Nautiyal",
-    role: "BEL CRL",
-    affiliation: "Advisor",
-  },
-  {
-    id: "3",
-    name: "Dr. Chikesh Ranjan",
-    role: "Project Engineer",
-    affiliation: "NIT Rourkela",
-  },
-  {
-    id: "4",
-    name: "Prof. (Dr.) Nikhil Kumar Yadav",
-    role: "Professor, Dean Academics",
-    affiliation: "Modern Institute of Technology & Research Centre, Alwar",
-  },
-  {
-    id: "5",
-    name: "A. Vanav Kumar",
-    role: "Associate Professor",
-    affiliation: "National Institute of Technology, Arunachal Pradesh",
-  },
-  {
-    id: "6",
-    name: "Girijesh Singh",
-    role: "Senior Assistant",
-    affiliation: "State Government-Horticulture Department, Bhadohi",
-  },
-  {
-    id: "7",
-    name: "Dr Nirkesh Sharma",
-    role: "President",
-    affiliation: "IITA- Indian International Teachers Association",
-  },
-  {
-    id: "8",
-    name: "Dr. Keshav Singh Rawat",
-    role: "Professor",
-    affiliation: "Central University of Haryana",
-  },
-  {
-    id: "9",
-    name: "Vanitha Rani Rentapalli",
-    role: "Associate professor",
-    affiliation: "VIT AP University",
-  },
-  {
-    id: "10",
-    name: "Khushi Veerapurmath",
-    role: "Professor",
-    affiliation: "India International school in Japan",
-  },
-  {
-    id: "11",
-    name: "Vivek Gupta",
-    role: "Manager",
-    affiliation: "nb",
-  },
-  {
-    id: "12",
-    name: "Saqib Khan",
-    role: "Web Developer",
-    affiliation: " ",
-  },
-  {
-    id: "13",
-    name: "Shanmugaraju K",
-    role: "Structural Engineer - R & D",
-    affiliation: "IIT Jodhpur, DOKA GmBH",
-  },
-];
-
 export default function AdvisoryBoard() {
+  const [advisoryMembers, setAdvisoryMembers] = useState<AdvisoryCardItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAdvisoryMembers = async () => {
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch("/api/advisory/list", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const payload = (await response.json().catch(() => ({}))) as unknown;
+
+        if (!response.ok) {
+          throw new Error(
+            getApiMessage(payload) || "Unable to fetch advisory members.",
+          );
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        setAdvisoryMembers(toAdvisoryItems(payload));
+      } catch (fetchError) {
+        if (!isMounted) {
+          return;
+        }
+
+        setAdvisoryMembers([]);
+        setError(
+          fetchError instanceof Error && fetchError.message
+            ? fetchError.message
+            : "Unable to fetch advisory members.",
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadAdvisoryMembers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="bg-black">
       <HeroBanner
@@ -171,36 +186,52 @@ export default function AdvisoryBoard() {
           </p>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {advisoryMembers.map((member, index) => (
-            <article
-              key={member.id}
-              className="group bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 text-center 
-                         border border-slate-700 hover:border-blue-500/50 
-                         transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10
-                         hover:-translate-y-1"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* Avatar */}
-              <div
-                className="relative mx-auto mb-5 w-32 h-32 rounded-full overflow-hidden 
-                            ring-4 ring-slate-700 group-hover:ring-blue-500/30 transition-all duration-300"
-              >
-                <InitialsAvatar name={member.name} />
-              </div>
+        {error && (
+          <div className="mb-8 rounded-md border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+            {error}
+          </div>
+        )}
 
-              {/* Content */}
-              <div className="space-y-3">
-                <h3 className="text-xl font-semibold text-white">
-                  {member.name}
-                </h3>
-                <p className="text-blue-500 font-medium">{member.role}</p>
-                <p className="text-slate-400 text-sm">{member.affiliation}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex h-56 items-center justify-center">
+            <Loader2 className="h-7 w-7 animate-spin text-zinc-400" />
+          </div>
+        ) : advisoryMembers.length === 0 ? (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-6 py-10 text-center text-zinc-400">
+            No active advisory members are published yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {advisoryMembers.map((member, index) => (
+              <article
+                key={member.id}
+                className="group bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 text-center 
+                           border border-slate-700 hover:border-blue-500/50 
+                           transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10
+                           hover:-translate-y-1"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div
+                  className="relative mx-auto mb-5 w-32 h-32 rounded-full overflow-hidden 
+                              ring-4 ring-slate-700 group-hover:ring-blue-500/30 transition-all duration-300"
+                >
+                  <InitialsAvatar name={member.name} />
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="text-xl font-semibold text-white">{member.name}</h3>
+                  <p className="text-blue-500 font-medium">{member.role}</p>
+                  <p className="text-slate-400 text-sm">{member.affiliation}</p>
+                  {member.bio ? (
+                    <p className="text-zinc-500 text-xs leading-relaxed line-clamp-3">
+                      {member.bio}
+                    </p>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
           <div className="w-full text-center">

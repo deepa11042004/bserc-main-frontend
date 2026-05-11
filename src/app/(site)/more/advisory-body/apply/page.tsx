@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 import {
   Camera,
   Clock3,
@@ -33,6 +36,24 @@ const contributionModes = [
   "Support Innovation & Student Project Development",
   "Documentation / Photography of Events & Activities (if applicable)",
 ];
+
+function getApiMessage(payload: unknown): string {
+  if (!payload || typeof payload !== "object") {
+    return "";
+  }
+
+  const record = payload as Record<string, unknown>;
+
+  if (typeof record.message === "string" && record.message.trim()) {
+    return record.message;
+  }
+
+  if (typeof record.error === "string" && record.error.trim()) {
+    return record.error;
+  }
+
+  return "";
+}
 
 const inputClass =
   "w-full bg-[#10141c] border border-[#2a3342] rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-500 transition-colors focus:outline-none focus:border-orange-500/60 hover:border-[#3f4e63]";
@@ -71,6 +92,140 @@ function SectionCard({
 }
 
 export default function AdvisoryBoardApplyPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const getTextValue = (key: string) => {
+      const value = formData.get(key);
+      return typeof value === "string" ? value.trim() : "";
+    };
+
+    const getArrayValues = (key: string) => {
+      return formData
+        .getAll(key)
+        .map((value) => (typeof value === "string" ? value.trim() : ""))
+        .filter((value) => Boolean(value));
+    };
+
+    const declarationAccepted = formData.get("declaration_accepted") !== null;
+    const officialEmail = getTextValue("official_email").toLowerCase();
+    const alternativeEmail = getTextValue("alternative_email").toLowerCase();
+    const mediaSupportRaw = getTextValue("media_support").toLowerCase();
+
+    const suggestions = [
+      getTextValue("suggestion_1"),
+      getTextValue("suggestion_2"),
+      getTextValue("suggestion_3"),
+      getTextValue("suggestion_4"),
+      getTextValue("suggestion_5"),
+    ].filter((value) => Boolean(value));
+
+    const payload = {
+      full_name: getTextValue("full_name"),
+      designation: getTextValue("designation"),
+      organization_institution: getTextValue("organization_institution"),
+      department_specialisation: getTextValue("department_specialisation"),
+      official_email: officialEmail,
+      alternative_email: alternativeEmail,
+      mobile_number: getTextValue("mobile_number"),
+      location_text: getTextValue("location_text"),
+      highest_qualification: getTextValue("highest_qualification"),
+      qualification_year: getTextValue("qualification_year"),
+      experience_years: getTextValue("experience_years"),
+      key_research_areas: getTextValue("key_research_areas"),
+      professional_expertise: getTextValue("professional_expertise"),
+      preferred_contributions: getArrayValues("preferred_contributions"),
+      preferred_contribution_other: getTextValue("preferred_contribution_other"),
+      contribution_modes: getArrayValues("contribution_modes"),
+      contribution_mode_other: getTextValue("contribution_mode_other"),
+      monthly_hours: getTextValue("monthly_hours"),
+      interaction_modes: getArrayValues("interaction_modes"),
+      availability_period: getTextValue("availability_period"),
+      suggestions,
+      viksit_bharat_contribution: getTextValue("viksit_bharat_contribution"),
+      media_support: mediaSupportRaw ? mediaSupportRaw === "yes" : null,
+      media_tools: getTextValue("media_tools"),
+      declaration_accepted: declarationAccepted,
+    };
+
+    if (
+      !payload.full_name
+      || !payload.designation
+      || !payload.organization_institution
+      || !payload.official_email
+      || !payload.mobile_number
+    ) {
+      setSubmitSuccess("");
+      setSubmitError(
+        "Please fill all required fields: full name, designation, organisation, official email, and mobile number.",
+      );
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(payload.official_email)) {
+      setSubmitSuccess("");
+      setSubmitError("Please enter a valid official email address.");
+      return;
+    }
+
+    if (payload.alternative_email && !emailRegex.test(payload.alternative_email)) {
+      setSubmitSuccess("");
+      setSubmitError("Please enter a valid alternative email address.");
+      return;
+    }
+
+    if (!payload.declaration_accepted) {
+      setSubmitSuccess("");
+      setSubmitError("Please accept the declaration before submitting.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+    setSubmitSuccess("");
+
+    try {
+      const response = await fetch("/api/advisory/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responsePayload = (await response.json().catch(() => ({}))) as unknown;
+
+      if (!response.ok) {
+        throw new Error(
+          getApiMessage(responsePayload)
+          || "Unable to submit advisory application. Please try again.",
+        );
+      }
+
+      setSubmitSuccess(
+        getApiMessage(responsePayload)
+        || "Application submitted successfully. It is now pending for admin review.",
+      );
+      form.reset();
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error && error.message
+          ? error.message
+          : "Unable to submit advisory application. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-zinc-300 py-8 sm:py-12 md:py-16 px-4 sm:px-6 selection:bg-orange-500 selection:text-black">
       <div className="max-w-6xl mx-auto w-full">
@@ -85,12 +240,28 @@ export default function AdvisoryBoardApplyPage() {
             Advisory Member <span className="text-orange-500">Application</span>
           </h1>
           <p className="max-w-3xl text-sm text-zinc-400 sm:text-base leading-relaxed">
-            Submit your interest to join the BSERC Advisory Body. This is a UI-only application form with the same polished theme used for MoU submissions.
+            Submit your interest to join the BSERC Advisory Body. Your application will be stored with pending status and reviewed by the admin team.
           </p>
         </div>
 
         <div className="overflow-hidden rounded-3xl border border-[#262626] bg-[#111111] shadow-2xl shadow-black/30">
-          <form className="space-y-4 sm:space-y-6 px-5 py-6 md:px-8 md:py-8">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="space-y-4 sm:space-y-6 px-5 py-6 md:px-8 md:py-8"
+          >
+            {submitError && (
+              <div className="rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+                {submitError}
+              </div>
+            )}
+
+            {submitSuccess && (
+              <div className="rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
+                {submitSuccess}
+              </div>
+            )}
+
             <SectionCard
               title="About the Advisory Body"
               subtitle="Strategic guidance from academia, research, industry, and innovation leaders"
@@ -109,14 +280,43 @@ export default function AdvisoryBoardApplyPage() {
 
             <SectionCard title="Section 1: Personal Details" icon={<User2 className="h-5 w-5" />}>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <input className={inputClass} placeholder="Full Name" />
-                <input className={inputClass} placeholder="Designation" />
-                <input className={inputClass} placeholder="Organisation / Institution" />
-                <input className={inputClass} placeholder="Department / Specialisation" />
-                <input type="email" className={inputClass} placeholder="Official Email" />
-                <input type="email" className={inputClass} placeholder="Alternative Email" />
-                <input className={inputClass} placeholder="Mobile Number (with Country Code)" />
-                <input className={inputClass} placeholder="Present City / State / Country" />
+                <input name="full_name" required className={inputClass} placeholder="Full Name" />
+                <input name="designation" required className={inputClass} placeholder="Designation" />
+                <input
+                  name="organization_institution"
+                  required
+                  className={inputClass}
+                  placeholder="Organisation / Institution"
+                />
+                <input
+                  name="department_specialisation"
+                  className={inputClass}
+                  placeholder="Department / Specialisation"
+                />
+                <input
+                  name="official_email"
+                  type="email"
+                  required
+                  className={inputClass}
+                  placeholder="Official Email"
+                />
+                <input
+                  name="alternative_email"
+                  type="email"
+                  className={inputClass}
+                  placeholder="Alternative Email"
+                />
+                <input
+                  name="mobile_number"
+                  required
+                  className={inputClass}
+                  placeholder="Mobile Number (with Country Code)"
+                />
+                <input
+                  name="location_text"
+                  className={inputClass}
+                  placeholder="Present City / State / Country"
+                />
               </div>
             </SectionCard>
 
@@ -125,11 +325,24 @@ export default function AdvisoryBoardApplyPage() {
               icon={<GraduationCap className="h-5 w-5" />}
             >
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <input className={inputClass} placeholder="Highest Qualification" />
-                <input className={inputClass} placeholder="Year of Qualification" />
-                <input className={inputClass} placeholder="Relevant Experience (in Years)" />
+                <input
+                  name="highest_qualification"
+                  className={inputClass}
+                  placeholder="Highest Qualification"
+                />
+                <input
+                  name="qualification_year"
+                  className={inputClass}
+                  placeholder="Year of Qualification"
+                />
+                <input
+                  name="experience_years"
+                  className={inputClass}
+                  placeholder="Relevant Experience (in Years)"
+                />
               </div>
               <textarea
+                name="key_research_areas"
                 rows={3}
                 className={`${inputClass} mt-4`}
                 placeholder="Key Research / Professional Areas"
@@ -137,6 +350,7 @@ export default function AdvisoryBoardApplyPage() {
               <div className="mt-4">
                 <p className="mb-2 text-sm text-zinc-300">Brief Professional Expertise (Maximum 100 Words)</p>
                 <textarea
+                  name="professional_expertise"
                   rows={4}
                   className={inputClass}
                   placeholder="Please briefly describe your expertise in defence-space technologies, drones, rocketry, UAVs, artificial intelligence, cybersecurity, remote sensing, innovation, or related domains."
@@ -153,13 +367,27 @@ export default function AdvisoryBoardApplyPage() {
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {contributionAreas.map((item) => (
                     <label key={item} className="flex items-start gap-3 text-zinc-200">
-                      <input type="checkbox" className={checkboxClass} />
+                      <input
+                        name="preferred_contributions"
+                        value={item}
+                        type="checkbox"
+                        className={checkboxClass}
+                      />
                       <span>{item}</span>
                     </label>
                   ))}
                   <div className="flex items-center gap-3 md:col-span-2">
-                    <input type="checkbox" className={checkboxClass} />
-                    <input className={inputClass} placeholder="Others (Specify)" />
+                    <input
+                      name="preferred_contributions"
+                      value="Others"
+                      type="checkbox"
+                      className={checkboxClass}
+                    />
+                    <input
+                      name="preferred_contribution_other"
+                      className={inputClass}
+                      placeholder="Others (Specify)"
+                    />
                   </div>
                 </div>
               </div>
@@ -169,13 +397,27 @@ export default function AdvisoryBoardApplyPage() {
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {contributionModes.map((item) => (
                     <label key={item} className="flex items-start gap-3 text-zinc-200">
-                      <input type="checkbox" className={checkboxClass} />
+                      <input
+                        name="contribution_modes"
+                        value={item}
+                        type="checkbox"
+                        className={checkboxClass}
+                      />
                       <span>{item}</span>
                     </label>
                   ))}
                   <div className="flex items-center gap-3 md:col-span-2">
-                    <input type="checkbox" className={checkboxClass} />
-                    <input className={inputClass} placeholder="Other (Specify)" />
+                    <input
+                      name="contribution_modes"
+                      value="Other"
+                      type="checkbox"
+                      className={checkboxClass}
+                    />
+                    <input
+                      name="contribution_mode_other"
+                      className={inputClass}
+                      placeholder="Other (Specify)"
+                    />
                   </div>
                 </div>
               </div>
@@ -187,19 +429,34 @@ export default function AdvisoryBoardApplyPage() {
             >
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <input
+                  name="monthly_hours"
                   className={inputClass}
                   placeholder="Average Time You Can Devote Per Month (in Hours)"
                 />
-                <input className={inputClass} placeholder="Availability Period (Start - End)" />
+                <input
+                  name="availability_period"
+                  className={inputClass}
+                  placeholder="Availability Period (Start - End)"
+                />
               </div>
               <div className="mt-4 space-y-2">
                 <p className="font-medium text-zinc-200">Preferred Mode of Interaction</p>
                 <label className="flex items-center gap-3 text-zinc-200">
-                  <input type="checkbox" className={checkboxClass} />
+                  <input
+                    name="interaction_modes"
+                    value="Online (Virtual Meetings / Webinars)"
+                    type="checkbox"
+                    className={checkboxClass}
+                  />
                   <span>Online (Virtual Meetings / Webinars)</span>
                 </label>
                 <label className="flex items-center gap-3 text-zinc-200">
-                  <input type="checkbox" className={checkboxClass} />
+                  <input
+                    name="interaction_modes"
+                    value="Hybrid (Online + Occasional In-Person Interaction)"
+                    type="checkbox"
+                    className={checkboxClass}
+                  />
                   <span>Hybrid (Online + Occasional In-Person Interaction)</span>
                 </label>
               </div>
@@ -216,11 +473,11 @@ export default function AdvisoryBoardApplyPage() {
                 initiatives.
               </p>
               <div className="space-y-3">
-                <textarea rows={3} className={inputClass} placeholder="Suggestion 1" />
-                <textarea rows={3} className={inputClass} placeholder="Suggestion 2" />
-                <textarea rows={3} className={inputClass} placeholder="Suggestion 3" />
-                <textarea rows={3} className={inputClass} placeholder="Suggestion 4 (Optional)" />
-                <textarea rows={3} className={inputClass} placeholder="Suggestion 5 (Optional)" />
+                <textarea name="suggestion_1" rows={3} className={inputClass} placeholder="Suggestion 1" />
+                <textarea name="suggestion_2" rows={3} className={inputClass} placeholder="Suggestion 2" />
+                <textarea name="suggestion_3" rows={3} className={inputClass} placeholder="Suggestion 3" />
+                <textarea name="suggestion_4" rows={3} className={inputClass} placeholder="Suggestion 4 (Optional)" />
+                <textarea name="suggestion_5" rows={3} className={inputClass} placeholder="Suggestion 5 (Optional)" />
               </div>
             </SectionCard>
 
@@ -229,6 +486,7 @@ export default function AdvisoryBoardApplyPage() {
               icon={<Flag className="h-5 w-5" />}
             >
               <textarea
+                name="viksit_bharat_contribution"
                 rows={5}
                 className={inputClass}
                 placeholder="In 100-150 words, describe how your expertise, experience, and vision can contribute towards Viksit Bharat @2047 and support BSERC's youth-centric defence-space initiatives."
@@ -245,15 +503,16 @@ export default function AdvisoryBoardApplyPage() {
                   photography, or videography of BSERC activities?
                 </p>
                 <label className="flex items-center gap-3">
-                  <input type="radio" name="mediaSupport" className={radioClass} />
+                  <input type="radio" name="media_support" value="yes" className={radioClass} />
                   <span>Yes</span>
                 </label>
                 <label className="flex items-center gap-3">
-                  <input type="radio" name="mediaSupport" className={radioClass} />
+                  <input type="radio" name="media_support" value="no" className={radioClass} />
                   <span>No</span>
                 </label>
               </div>
               <textarea
+                name="media_tools"
                 rows={3}
                 className={`${inputClass} mt-4`}
                 placeholder="If yes, mention tools/software/platforms you are comfortable using (DSLR, smartphone photography, Canva, Adobe tools, video editing software, etc.)"
@@ -273,17 +532,23 @@ export default function AdvisoryBoardApplyPage() {
                 Advancing Defence, Space, Innovation & Research for Viksit Bharat @2047.
               </p>
               <label className="mt-4 flex items-start gap-3 text-zinc-200">
-                <input type="checkbox" className={`${checkboxClass} mt-1`} />
+                <input
+                  name="declaration_accepted"
+                  value="true"
+                  type="checkbox"
+                  className={`${checkboxClass} mt-1`}
+                />
                 <span>I agree to the declaration above.</span>
               </label>
             </SectionCard>
 
             <div className="flex justify-center rounded-2xl p-4 md:p-5">
               <button
-                type="button"
-                className="w-full max-w-xs rounded-full bg-orange-500 px-6 py-3 font-semibold text-black shadow-lg shadow-orange-500/20 transition-colors hover:bg-orange-400 sm:w-auto"
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full max-w-xs rounded-full bg-orange-500 px-6 py-3 font-semibold text-black shadow-lg shadow-orange-500/20 transition-colors hover:bg-orange-400 disabled:bg-zinc-700 disabled:text-zinc-300 sm:w-auto"
               >
-                Submit Application
+                {isSubmitting ? "Submitting..." : "Submit Application"}
               </button>
             </div>
           </form>

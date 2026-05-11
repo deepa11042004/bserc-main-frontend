@@ -1,9 +1,5 @@
-// app/advisory-board/page.tsx
+import AdvisoryList from "@/components/admin/advisory/AdvisoryList";
+
 export default function AdvisoryBoardPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-white">Advisory Board</h1>
-      {/* Your advisory board content here */}
-    </div>
-  )
+  return <AdvisoryList />;
 }
