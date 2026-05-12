@@ -82,8 +82,6 @@ const LATERAL_CATEGORY_OPTIONS = [
 ];
 const LATERAL_EWS_CATEGORY_VALUE = "EWS(Economically weaker section)";
 const DEFAULT_LATERAL_EWS_FEE_RUPEES = 1350;
-const RECOMMENDATION_LETTER_DOWNLOAD_PATH =
-  "/Recommendation%20Letter%20Def-Space%20Summer%20Internship%202026%20(2).pdf";
 
 function formatFeeValueRupees(value: number): string {
   if (!Number.isFinite(value) || value < 0) {
@@ -233,6 +231,7 @@ function FormSelect({
   onChange,
   placeholder = "--Select--",
   infoText,
+  helperText,
 }: any) {
   return (
     <div className="mb-6 w-full">
@@ -285,6 +284,11 @@ function FormSelect({
           <ChevronDown className="w-5 h-5 text-zinc-500"/>
         </div>
       </div>
+      {helperText && (
+        <p className="mt-1.5 text-[11px] font-normal leading-relaxed text-zinc-400">
+          {helperText}
+        </p>
+      )}
     </div>
   );
 }
@@ -356,8 +360,6 @@ export default function InternshipApplicationForm() {
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus | null>(null);
   const [paymentRetryPrompt, setPaymentRetryPrompt] =
     useState<PaymentRetryPrompt | null>(null);
-  const [showEwsRecommendationPrompt, setShowEwsRecommendationPrompt] =
-    useState<boolean>(false);
   const [ewsLateralFeeRupees, setEwsLateralFeeRupees] = useState<number>(
     DEFAULT_LATERAL_EWS_FEE_RUPEES,
   );
@@ -523,16 +525,7 @@ export default function InternshipApplicationForm() {
   };
 
   const handleSuccessfulRegistration = (message: string) => {
-    const shouldShowRecommendationPrompt =
-      isLateralRegistration && formData.category === LATERAL_EWS_CATEGORY_VALUE;
-
     clearForm();
-
-    if (shouldShowRecommendationPrompt) {
-      setSubmitStatus(null);
-      setShowEwsRecommendationPrompt(true);
-      return;
-    }
 
     setSubmitStatus({
       type: "success",
@@ -543,7 +536,6 @@ export default function InternshipApplicationForm() {
   const startInternshipSubmission = async () => {
     setSubmitStatus(null);
     setPaymentRetryPrompt(null);
-    setShowEwsRecommendationPrompt(false);
 
     if (
       isLateralRegistration
@@ -799,7 +791,6 @@ export default function InternshipApplicationForm() {
 
   const handlePaymentCancel = () => {
     setPaymentRetryPrompt(null);
-    setShowEwsRecommendationPrompt(false);
     clearForm();
     setSubmitStatus({
       type: "info",
@@ -816,52 +807,6 @@ export default function InternshipApplicationForm() {
         message={activeResponse?.message ?? ""}
         onClose={() => setSubmitStatus(null)}
       />
-
-      {showEwsRecommendationPrompt && (
-        <div className="fixed inset-0 z-[141] flex items-center justify-center px-4">
-          <button
-            type="button"
-            aria-label="Close recommendation letter popup backdrop"
-            className="absolute inset-0 bg-black/75 backdrop-blur-[2px]"
-            onClick={() => setShowEwsRecommendationPrompt(false)}
-          />
-
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="relative w-full max-w-lg rounded-xl border border-cyan-400/60 bg-cyan-500/10 px-5 py-4 shadow-2xl"
-          >
-            <div className="mb-4">
-              <p className="text-sm font-semibold uppercase tracking-wide text-white/90">
-                Registration Successful
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-zinc-100">
-                After successful registration, candidates must download the
-                Recommendation Letter, get it signed by the Principal or any
-                authorised school authority, and email the signed copy to
-                outreach@bserc.org.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <a
-                href={RECOMMENDATION_LETTER_DOWNLOAD_PATH}
-                download
-                className="rounded-md border border-cyan-400/50 bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-500/30"
-              >
-                Download Letter
-              </a>
-              <button
-                type="button"
-                onClick={() => setShowEwsRecommendationPrompt(false)}
-                className="rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-white/20"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {paymentRetryPrompt && (
         <div className="fixed inset-0 z-[140] flex items-center justify-center px-4">
@@ -981,6 +926,7 @@ export default function InternshipApplicationForm() {
                     value={formData.category}
                     onChange={handleChange}
                     infoText={lateralCategoryInfoText}
+                    helperText="EWS (family income below ₹7 lakh): Registration fee ₹1350"
                   />
                 </div>
               ) : (

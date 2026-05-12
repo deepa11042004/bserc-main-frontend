@@ -31,6 +31,7 @@ interface SelectFieldProps {
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   placeholder?: string;
   infoText?: string;
+  helperText?: string;
 }
 
 type RazorpaySuccessResponse = {
@@ -106,8 +107,6 @@ const DEFAULT_BATCH_OPTIONS = [
   "Batch 2: 19th June - 30th July",
 ];
 const EWS_CATEGORY_VALUE = "EWS(Economically weaker section)";
-const RECOMMENDATION_LETTER_DOWNLOAD_PATH =
-  "/Recommendation%20Letter%20Def-Space%20Summer%20School%202026.pdf";
 
 function getRazorpayConstructor(): RazorpayConstructor | undefined {
   if (typeof window === "undefined") {
@@ -285,6 +284,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   onChange,
   placeholder = "--Select--",
   infoText,
+  helperText,
 }) => (
   <div className="w-full mb-6">
     <FormLabel label={label} required={required} infoText={infoText} />
@@ -306,6 +306,11 @@ const SelectField: React.FC<SelectFieldProps> = ({
         <ChevronDown className="w-4 h-4" />
       </div>
     </div>
+    {helperText && (
+      <p className="mt-1.5 text-[11px] font-normal leading-relaxed text-zinc-400">
+        {helperText}
+      </p>
+    )}
   </div>
 );
 
@@ -315,8 +320,6 @@ export default function Page() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string>("");
   const [submitMessage, setSubmitMessage] = useState<string>("");
-  const [showEwsRecommendationPrompt, setShowEwsRecommendationPrompt] =
-    useState<boolean>(false);
   const [showPaymentIncompletePrompt, setShowPaymentIncompletePrompt] =
     useState<boolean>(false);
   const [retryPaymentAction, setRetryPaymentAction] =
@@ -356,14 +359,8 @@ export default function Page() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSuccessfulRegistration = (message: string, category: string) => {
-    if (category === EWS_CATEGORY_VALUE) {
-      setSubmitMessage("");
-      setShowEwsRecommendationPrompt(true);
-    } else {
-      setSubmitMessage(message);
-    }
-
+  const handleSuccessfulRegistration = (message: string) => {
+    setSubmitMessage(message);
     setFormData(createInitialFormData());
     setGuidelinesAccepted(false);
     setConductAccepted(false);
@@ -450,7 +447,6 @@ export default function Page() {
 
     setSubmitError("");
     setSubmitMessage("");
-    setShowEwsRecommendationPrompt(false);
     setShowPaymentIncompletePrompt(false);
     setRetryPaymentAction(null);
     setIsSubmitting(true);
@@ -535,7 +531,6 @@ export default function Page() {
 
         handleSuccessfulRegistration(
           responseMessage || "Application submitted successfully!",
-          formData.category,
         );
         setIsSubmitting(false);
         return;
@@ -728,7 +723,6 @@ export default function Page() {
             handleSuccessfulRegistration(
               verifyMessage
                 || "Payment successful and student registration completed.",
-              formData.category,
             );
           } catch (error) {
             setSubmitError(
@@ -819,52 +813,6 @@ export default function Page() {
           setSubmitMessage("");
         }}
       />
-
-      {showEwsRecommendationPrompt && (
-        <div className="fixed inset-0 z-[141] flex items-center justify-center px-4">
-          <button
-            type="button"
-            aria-label="Close recommendation letter popup backdrop"
-            className="absolute inset-0 bg-black/75 backdrop-blur-[2px]"
-            onClick={() => setShowEwsRecommendationPrompt(false)}
-          />
-
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="relative w-full max-w-lg rounded-xl border border-cyan-400/60 bg-cyan-500/10 px-5 py-4 shadow-2xl"
-          >
-            <div className="mb-4">
-              <p className="text-sm font-semibold uppercase tracking-wide text-white/90">
-                Registration Successful
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-zinc-100">
-                After successful registration, candidates must download the
-                Recommendation Letter, get it signed by the Principal or any
-                authorised school authority, and email the signed copy to
-                outreach@bserc.org.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <a
-                href={RECOMMENDATION_LETTER_DOWNLOAD_PATH}
-                download
-                className="rounded-md border border-cyan-400/50 bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-500/30"
-              >
-                Download Letter
-              </a>
-              <button
-                type="button"
-                onClick={() => setShowEwsRecommendationPrompt(false)}
-                className="rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-white/20"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showPaymentIncompletePrompt && (
         <div className="fixed inset-0 z-[140] flex items-center justify-center px-4">
@@ -1000,6 +948,7 @@ export default function Page() {
                 onChange={handleInputChange}
                 placeholder="--Select Category--"
                 infoText="Economically Weaker Section candidates (whose family annual income is less than ₹7 lakh) can apply under the Weaker Section. The registration fee for this category is ₹750."
+                helperText="EWS (family income below ₹7 lakh): Registration fee ₹750"
               />
               <InputField
                 label="Alternative Email Address / वैकल्पिक ईमेल पता"
