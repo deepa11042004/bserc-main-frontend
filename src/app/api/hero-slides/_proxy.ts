@@ -91,9 +91,12 @@ export async function forwardHeroSlidesPublicRequest(
 
   for (const backendUrl of backendUrls) {
     try {
+      const isMediaRequest = endpoint.includes("/media");
       const response = await fetch(`${backendUrl}${endpoint}`, {
         method,
-        cache: "no-store",
+        ...(isMediaRequest
+          ? { cache: "no-store" }
+          : { next: { revalidate: 300 } }),
       });
 
       const contentType = response.headers.get("content-type");
@@ -104,7 +107,7 @@ export async function forwardHeroSlidesPublicRequest(
 
         const responseHeaders: Record<string, string> = {
           "Content-Type": contentType || "application/octet-stream",
-          "Cache-Control": response.headers.get("cache-control") || "no-store",
+          "Cache-Control": response.headers.get("cache-control") || "public, max-age=300, s-maxage=600",
         };
 
         const contentDisposition = response.headers.get("content-disposition");
@@ -133,11 +136,23 @@ export async function forwardHeroSlidesPublicRequest(
       const payload = await parseUpstreamBody(response);
 
       if ([500, 502, 503, 504].includes(response.status)) {
-        lastRetriableResponse = NextResponse.json(payload, { status: response.status });
+        lastRetriableResponse = new NextResponse(JSON.stringify(payload), {
+          status: response.status,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        });
         continue;
       }
 
-      return NextResponse.json(payload, { status: response.status });
+      return new NextResponse(JSON.stringify(payload), {
+        status: response.status,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": response.status === 200 ? "public, max-age=300, s-maxage=600" : "no-store",
+        },
+      });
     } catch {
       continue;
     }

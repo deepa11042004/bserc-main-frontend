@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 import {
   FaFacebookF,
@@ -12,6 +12,7 @@ import { FiMail } from "react-icons/fi";
 import { IconType } from "react-icons";
 import Image from "next/image";
 import Link from "next/link";
+import ViewportGate from "@/components/perf/ViewportGate";
 
 // ─────────────────────────────────────────────────────────────
 // Type definitions
@@ -96,6 +97,17 @@ function normalizeNewsItem(item: unknown): NewsItem | null {
   };
 }
 
+async function fetchFooterNews(url: string): Promise<FooterNewsApiResponse> {
+  const response = await fetch(url, { method: "GET" });
+  const payload = (await response.json().catch(() => ({}))) as unknown;
+
+  if (!response.ok) {
+    throw new Error(getApiMessage(payload) || "Unable to fetch footer news.");
+  }
+
+  return payload as FooterNewsApiResponse;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Typed data arrays
 // ─────────────────────────────────────────────────────────────
@@ -117,53 +129,51 @@ const contactItems: ContactItem[] = [
   },
 ];
 
+function FooterNewsInner() {
+  const { data, error, isLoading } = useSWR<FooterNewsApiResponse>(
+    "/api/footer-news",
+    fetchFooterNews,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      revalidateIfStale: false,
+      dedupingInterval: 5 * 60 * 1000,
+    },
+  );
+
+  const rows = Array.isArray(data?.data) ? data?.data : [];
+  const newsUpdates = rows.map(normalizeNewsItem).filter((item): item is NewsItem => Boolean(item));
+
+  if (isLoading) {
+    return (
+      <div className="px-3 py-3 text-xs sm:text-sm text-slate-500">Loading updates...</div>
+    );
+  }
+
+  if (error || newsUpdates.length === 0) {
+    return (
+      <div className="px-3 py-3 text-xs sm:text-sm text-slate-500">No updates available right now.</div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      {newsUpdates.map((item) => (
+        <div key={item.id} className="hover:bg-white/5 transition px-3 py-2.5">
+          <a href={item.href} {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="hover:text-[#3B82F6] transition inline-block w-full text-xs sm:text-sm text-slate-300">
+            {item.title}
+          </a>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // Four-Column Footer Component
 // ─────────────────────────────────────────────────────────────
 
 const Footer = () => {
-  const [newsUpdates, setNewsUpdates] = useState<NewsItem[]>([]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadFooterNews = async () => {
-      try {
-        const response = await fetch("/api/footer-news", {
-          method: "GET",
-          cache: "no-store",
-        });
-
-        const payload = (await response.json().catch(() => ({}))) as unknown;
-
-        if (!response.ok) {
-          throw new Error(getApiMessage(payload) || "Unable to fetch footer news.");
-        }
-
-        const root = payload as FooterNewsApiResponse;
-        const rows = Array.isArray(root.data) ? root.data : [];
-        const normalizedItems = rows
-          .map(normalizeNewsItem)
-          .filter((item): item is NewsItem => Boolean(item));
-
-        if (!isMounted) {
-          return;
-        }
-
-        setNewsUpdates(normalizedItems);
-      } catch {
-        if (isMounted) {
-          setNewsUpdates([]);
-        }
-      }
-    };
-
-    void loadFooterNews();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   return (
     <footer className="bg-black text-white border-t border-white/10">
@@ -272,34 +282,14 @@ const Footer = () => {
               News and Updates
             </h4>
             <div className="w-full max-h-[160px] overflow-y-auto rounded-md border border-white/10 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b1224] [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/30">
-              <table className="w-full text-left text-xs sm:text-sm text-slate-300 relative">
-                <tbody className="divide-y divide-white/10">
-                  {newsUpdates.length === 0 ? (
-                    <tr>
-                      <td className="px-3 py-3 text-xs sm:text-sm text-slate-500">
-                        No updates available right now.
-                      </td>
-                    </tr>
-                  ) : (
-                    newsUpdates.map((item) => (
-                      <tr key={item.id} className="hover:bg-white/5 transition">
-                        <td className="px-3 py-2.5">
-                          <a
-                            href={item.href}
-                            {...(item.external && {
-                              target: "_blank",
-                              rel: "noopener noreferrer",
-                            })}
-                            className="hover:text-[#3B82F6] transition inline-block w-full"
-                          >
-                            {item.title}
-                          </a>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              {/* Deferred load: only mount and fetch when footer enters viewport. Render the whole table when in view to avoid invalid DOM nesting. */}
+              <ViewportGate rootMargin="200px" once>
+                <div className="w-full text-left text-xs sm:text-sm text-slate-300 relative">
+                  <div className="divide-y divide-white/10">
+                    <FooterNewsInner />
+                  </div>
+                </div>
+              </ViewportGate>
             </div>
           </div>
 

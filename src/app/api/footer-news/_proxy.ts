@@ -77,7 +77,7 @@ export async function forwardFooterNewsPublicRequest(
     try {
       const response = await fetch(`${backendUrl}${endpoint}`, {
         method,
-        cache: "no-store",
+        next: { revalidate: 300 },
       });
 
       const payload = await parseUpstreamBody(response);
@@ -88,7 +88,12 @@ export async function forwardFooterNewsPublicRequest(
         continue;
       }
 
-      return NextResponse.json(payload, { status: response.status });
+      return NextResponse.json(payload, {
+        status: response.status,
+        headers: {
+          "Cache-Control": response.status === 200 ? "public, max-age=300, s-maxage=600" : "no-store",
+        },
+      });
     } catch {
       continue;
     }
@@ -97,11 +102,19 @@ export async function forwardFooterNewsPublicRequest(
   if (lastRetriableStatus !== null) {
     return NextResponse.json(lastRetriablePayload ?? {}, {
       status: lastRetriableStatus,
+      headers: {
+        "Cache-Control": "no-store",
+      },
     });
   }
 
   return NextResponse.json(
     { message: "Footer news service is unavailable." },
-    { status: 502 },
+    {
+      status: 502,
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    },
   );
 }
