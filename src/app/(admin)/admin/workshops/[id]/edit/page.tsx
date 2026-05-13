@@ -9,7 +9,6 @@ import {
   CalendarDays,
   ChevronDown,
   Clock,
-  FileText,
   ImagePlus,
   IndianRupee,
   Loader2,
@@ -35,8 +34,6 @@ type WorkshopResponse = {
   duration?: string | null;
   certificate?: boolean;
   fee?: number | null;
-  thumbnail_url?: string | null;
-  certificate_url?: string | null;
   message?: string;
 };
 
@@ -51,8 +48,6 @@ type WorkshopFormState = {
   duration: string;
   certificate: boolean;
   fee: string;
-  thumbnail_url: string;
-  certificate_url: string;
 };
 
 const EMPTY_FORM: WorkshopFormState = {
@@ -66,8 +61,6 @@ const EMPTY_FORM: WorkshopFormState = {
   duration: "",
   certificate: true,
   fee: "",
-  thumbnail_url: "",
-  certificate_url: "",
 };
 
 const MODE_OPTIONS = [
@@ -422,7 +415,6 @@ export default function EditWorkshopPage() {
   const [selectedEligibilityOption, setSelectedEligibilityOption] = useState("");
   const [customEligibility, setCustomEligibility] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [certificateFile, setCertificateFile] = useState<File | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -467,8 +459,6 @@ export default function EditWorkshopPage() {
             payload.fee === null || payload.fee === undefined
               ? ""
               : String(payload.fee),
-          thumbnail_url: payload.thumbnail_url || "",
-          certificate_url: payload.certificate_url || "",
         });
 
         const savedEligibility = (payload.eligibility || "").trim();
@@ -583,11 +573,9 @@ export default function EditWorkshopPage() {
         duration: form.duration.trim(),
         certificate: form.certificate,
         fee: form.fee.trim() === "" ? null : Number(form.fee),
-        thumbnail_url: form.thumbnail_url.trim(),
-        certificate_url: form.certificate_url.trim(),
       };
 
-      const hasNewUpload = Boolean(thumbnailFile || certificateFile);
+      const hasNewUpload = Boolean(thumbnailFile);
       let response: Response;
 
       if (hasNewUpload) {
@@ -602,15 +590,9 @@ export default function EditWorkshopPage() {
         formData.append("duration", payload.duration);
         formData.append("certificate", String(payload.certificate));
         formData.append("fee", payload.fee === null ? "" : String(payload.fee));
-        formData.append("thumbnail_url", payload.thumbnail_url);
-        formData.append("certificate_url", payload.certificate_url);
 
         if (thumbnailFile) {
           formData.append("thumbnail", thumbnailFile);
-        }
-
-        if (certificateFile) {
-          formData.append("certificate_file", certificateFile);
         }
 
         response = await fetch(endpoint, {
@@ -636,7 +618,6 @@ export default function EditWorkshopPage() {
       setSuccessMessage("Workshop updated successfully");
       setToastMessage("Workshop updated successfully");
       setThumbnailFile(null);
-      setCertificateFile(null);
       window.setTimeout(() => {
         router.push("/admin/workshops");
       }, 800);
@@ -809,19 +790,10 @@ export default function EditWorkshopPage() {
                       fileName={thumbnailFile?.name}
                       onFileSelect={setThumbnailFile}
                     />
-                    <FormFileUpload
-                      name="certificate_file"
-                      label="Upload New Certificate"
-                      accept="image/png,image/jpeg,image/webp"
-                      hint="PNG, JPG, WEBP · Max 2MB"
-                      icon={<FileText className="w-8 h-8" />}
-                      fileName={certificateFile?.name}
-                      onFileSelect={setCertificateFile}
-                    />
                   </div>
 
                   {workshopId && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="grid grid-cols-1 gap-3 text-xs">
                       <a
                         href={`/api/workshop-list/${encodeURIComponent(workshopId)}/thumbnail`}
                         target="_blank"
@@ -830,35 +802,8 @@ export default function EditWorkshopPage() {
                       >
                         View current thumbnail
                       </a>
-                      <a
-                        href={`/api/workshop-list/${encodeURIComponent(workshopId)}/certificate`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 underline underline-offset-2"
-                      >
-                        View current certificate
-                      </a>
                     </div>
                   )}
-
-                  <FormInput
-                    name="thumbnail_url"
-                    label="Thumbnail URL"
-                    type="url"
-                    icon={<ImagePlus className="w-4 h-4" />}
-                    placeholder="https://..."
-                    value={form.thumbnail_url}
-                    onChange={(event) => updateField("thumbnail_url", event.target.value)}
-                  />
-                  <FormInput
-                    name="certificate_url"
-                    label="Certificate URL"
-                    type="url"
-                    icon={<FileText className="w-4 h-4" />}
-                    placeholder="https://..."
-                    value={form.certificate_url}
-                    onChange={(event) => updateField("certificate_url", event.target.value)}
-                  />
                 </CardContent>
               </Card>
             </div>

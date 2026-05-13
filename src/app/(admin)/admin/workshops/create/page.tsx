@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Plus,
   ImagePlus,
-  FileText,
   ChevronDown,
   CalendarDays,
   Clock,
@@ -34,7 +33,6 @@ interface WorkshopPayload {
   certificate: boolean;
   fee: number;
   thumbnail: string;
-  certificate_template: string | null;
 }
 
 // ─── Themed Field Primitives ──────────────────────────────────────────────────
@@ -381,7 +379,7 @@ const ELIGIBILITY_OPTIONS = [
 
 export default function AddNewWorkshopPage() {
   const [form, setForm] = useState<
-    Omit<WorkshopPayload, "thumbnail" | "certificate_template">
+    Omit<WorkshopPayload, "thumbnail">
   >({
     title: "",
     description: "",
@@ -396,7 +394,6 @@ export default function AddNewWorkshopPage() {
   });
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
@@ -489,7 +486,6 @@ export default function AddNewWorkshopPage() {
       fee: 0,
     });
     setThumbnailFile(null);
-    setCertificateFile(null);
     setErrors({});
     setSelectedEligibilityOption("");
     setCustomEligibility("");
@@ -520,14 +516,10 @@ export default function AddNewWorkshopPage() {
       };
 
       const thumbnailBase64 = await fileToBase64(thumbnailFile);
-      const certificateBase64 = certificateFile
-        ? await fileToBase64(certificateFile)
-        : null;
 
       const payload: WorkshopPayload = {
         ...formForApi,
         thumbnail: thumbnailBase64,
-        certificate_template: certificateBase64,
       };
 
       const token =
@@ -557,9 +549,6 @@ export default function AddNewWorkshopPage() {
           formData.append(key, String(val));
         });
         formData.append("thumbnail", thumbnailFile!);
-        if (certificateFile) {
-          formData.append("certificate", certificateFile);
-        }
 
         const multipartRes = await fetch(endpoint, {
           method: "POST",
@@ -814,16 +803,6 @@ export default function AddNewWorkshopPage() {
                     fileName={thumbnailFile?.name}
                     onFileSelect={setThumbnailFile}
                     error={errors.thumbnail}
-                  />
-                  <FormFileUpload
-                    key={`certificate-upload-${fileInputResetKey}`}
-                    name="certificate_template"
-                    label="Certificate Template"
-                    accept="image/png,image/jpeg,image/webp"
-                    hint="PNG, JPG, WEBP · Used to generate participant certificates"
-                    icon={<FileText className="w-8 h-8" />}
-                    fileName={certificateFile?.name}
-                    onFileSelect={setCertificateFile}
                   />
                 </CardContent>
               </Card>
