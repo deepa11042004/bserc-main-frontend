@@ -158,6 +158,7 @@ export default function WorkshopCard({ workshop }: { workshop: Workshop }) {
       <div className="mt-5">
         <Link
           href={registerHref}
+          prefetch={false}
           onClick={handleRegisterClick}
           aria-busy={isNavigating}
           className={`inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 ${

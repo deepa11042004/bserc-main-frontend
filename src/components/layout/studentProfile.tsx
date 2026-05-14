@@ -242,6 +242,7 @@ export default function StudentProfile() {
                       <Link
                         key={item.href}
                         href={item.href}
+                        prefetch={false}
                         onClick={() => setOpen(false)}
                         className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
                           active

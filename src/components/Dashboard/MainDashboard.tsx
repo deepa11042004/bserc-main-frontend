@@ -333,6 +333,7 @@ const StatCard: React.FC<{ card: StatCard }> = ({ card }) => (
     <CardFooter className="pt-2 border-t border-white/10">
       <Link
         href={card.link}
+        prefetch={false}
         className="text-white/90 hover:text-white text-xs font-medium flex items-center gap-1 transition-colors group"
       >
         {card.linkText}
@@ -735,7 +736,7 @@ export default function MainDashboard() {
                 </CardTitle>
               </div>
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded">
-                <Link href="/admin/participants">View All</Link>
+                <Link href="/admin/participants" prefetch={false}>View All</Link>
               </button>
             </div>
           </CardHeader>
@@ -761,7 +762,7 @@ export default function MainDashboard() {
               </div>
 
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded">
-                <Link href="/admin/contact-queries">View All</Link>
+                <Link href="/admin/contact-queries" prefetch={false}>View All</Link>
               </button>
             </div>
           </CardHeader>

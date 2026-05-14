@@ -160,6 +160,7 @@ function DashboardNavContent({
     <div className="flex h-full flex-col">
       <Link
         href="/profile"
+        prefetch={false}
         onClick={onNavigate}
         className="rounded-2xl border border-slate-700/80 bg-slate-900/70 p-3 text-slate-100 transition hover:border-cyan-500/60"
       >
@@ -201,6 +202,7 @@ function DashboardNavContent({
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={false}
                     onClick={onNavigate}
                     className={cn(
                       "flex items-center justify-between rounded-lg px-2.5 py-2 text-sm transition",

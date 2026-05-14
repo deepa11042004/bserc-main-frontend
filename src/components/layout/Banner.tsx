@@ -66,6 +66,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
                     <>
                       <Link
                         href={item.href}
+                        prefetch={false}
                         className="hover:text-blue-400 transition-colors"
                       >
                         {item.label}

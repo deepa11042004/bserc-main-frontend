@@ -11,7 +11,7 @@ export default function NotFound() {
         <p className="text-white/50 text-sm mb-8">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
-        <Link href="/">
+        <Link href="/" prefetch={false}>
            
           <button className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded' >Reture to Earth</button>
         </Link>

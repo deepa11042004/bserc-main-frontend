@@ -52,6 +52,7 @@ export function AuthShell({
                 <p className="mt-2">
                   <Link
                     href={actionLink.href}
+                    prefetch={false}
                     className={cn(
                       "text-sky-400 font-semibold hover:text-sky-300",
                       "transition-colors duration-200",

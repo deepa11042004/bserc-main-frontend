@@ -275,11 +275,11 @@ function HeroSliderInner() {
                     {primaryCtaText || secondaryCtaText ? (
                       <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
                         {primaryCtaText ? (
-                          <Link href={primaryCtaLink} className="inline-flex items-center rounded-xl bg-cyan-400 px-9 py-3.5 text-lg font-semibold text-black shadow-[0_0_26px_rgba(34,211,238,0.38)] transition hover:bg-cyan-300">{primaryCtaText}</Link>
+                          <Link href={primaryCtaLink} prefetch={false} className="inline-flex items-center rounded-xl bg-cyan-400 px-9 py-3.5 text-lg font-semibold text-black shadow-[0_0_26px_rgba(34,211,238,0.38)] transition hover:bg-cyan-300">{primaryCtaText}</Link>
                         ) : null}
 
                         {secondaryCtaText ? (
-                          <Link href={secondaryCtaLink} className="inline-flex items-center rounded-xl border border-white/25 bg-black/35 px-9 py-3.5 text-lg font-semibold text-white transition hover:border-cyan-300/55 hover:bg-black/50">{secondaryCtaText}</Link>
+                          <Link href={secondaryCtaLink} prefetch={false} className="inline-flex items-center rounded-xl border border-white/25 bg-black/35 px-9 py-3.5 text-lg font-semibold text-white transition hover:border-cyan-300/55 hover:bg-black/50">{secondaryCtaText}</Link>
                         ) : null}
                       </div>
                     ) : null}

@@ -71,7 +71,7 @@ function NavItem({
   }
 
   return (
-    <Link href={href} onClick={onClick} className={baseClasses}>
+    <Link href={href} prefetch={false} onClick={onClick} className={baseClasses}>
       <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
       {children}
     </Link>
@@ -105,6 +105,7 @@ export default function Sidebar() {
         <div className="h-full flex flex-col">
           <Link
             href="/admin"
+            prefetch={false}
             className="h-16 px-6 flex items-center border-b border-[#1F1F23]"
           >
             <div className="flex items-center gap-3">

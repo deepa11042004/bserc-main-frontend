@@ -84,6 +84,7 @@ export default function TopNav() {
             {item.href ? (
               <Link
                 href={item.href}
+                prefetch={false}
                 className="text-gray-300 hover:text-white transition-colors"
               >
                 {item.label}

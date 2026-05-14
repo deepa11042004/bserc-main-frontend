@@ -290,6 +290,7 @@ export default function Navbar() {
           <span>Apply for def-space summer internship </span>
           <Link
             href="/bsercinternship"
+            prefetch={false}
             className="text-blue-700 underline font-bold hover:text-blue-500"
           >
             Click here
@@ -298,6 +299,7 @@ export default function Navbar() {
           <span>Apply for def-space summer school </span>
           <Link
             href="/summer-school"
+            prefetch={false}
             className="text-blue-700 underline font-bold hover:text-blue-500"
           >
             Click here
@@ -329,6 +331,7 @@ export default function Navbar() {
           
           <Link
             href="/"
+            prefetch={false}
             className="flex items-center gap-2 shrink-0"
             onClick={closeAll}
           >
@@ -353,6 +356,7 @@ export default function Navbar() {
                 <li key={item.label}>
                   <Link
                     href={item.href}
+                    prefetch={false}
                     {...(item.external && {
                       target: "_blank",
                       rel: "noopener noreferrer",
@@ -401,6 +405,7 @@ export default function Navbar() {
                   <li key={item.label} className="border-b border-white/5">
                     <Link
                       href={item.href}
+                      prefetch={false}
                       {...(item.external && {
                         target: "_blank",
                         rel: "noopener noreferrer",
@@ -432,6 +437,7 @@ export default function Navbar() {
                   <>
                     <Link
                       href="/profile"
+                      prefetch={false}
                       className="block w-full text-center py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 hover:from-emerald-600 hover:via-emerald-700 hover:to-emerald-800 transition-all duration-300 shadow-lg"
                       onClick={closeAll}
                     >
@@ -448,6 +454,7 @@ export default function Navbar() {
                 ) : (
                   <Link
                     href="/login"
+                    prefetch={false}
                     className="block w-full text-center py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg"
                     onClick={closeAll}
                   >
@@ -499,6 +506,7 @@ function DesktopDropdown({
               <li key={item.label}>
                 <Link
                   href={item.href}
+                  prefetch={false}
                   {...(item.external && {
                     target: "_blank",
                     rel: "noopener noreferrer",
@@ -530,6 +538,7 @@ function DesktopDropdown({
                   <li key={child.label}>
                     <Link
                       href={child.href}
+                      prefetch={false}
                       {...(child.external && {
                         target: "_blank",
                         rel: "noopener noreferrer",
@@ -592,6 +601,7 @@ function MobileDropdown({
                 <li key={item.label}>
                   <Link
                     href={item.href}
+                    prefetch={false}
                     {...(item.external && {
                       target: "_blank",
                       rel: "noopener noreferrer",
@@ -624,6 +634,7 @@ function MobileDropdown({
                       <li key={child.label}>
                         <Link
                           href={child.href}
+                          prefetch={false}
                           {...(child.external && {
                             target: "_blank",
                             rel: "noopener noreferrer",

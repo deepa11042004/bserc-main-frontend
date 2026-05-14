@@ -124,7 +124,7 @@ export function UserDashboardShell({ children }: { children: ReactNode }) {
               <p className="text-sm text-slate-300">
                 Please log in with your learner account to access profile, workshops, and certificates.
               </p>
-              <Link href="/login">
+              <Link href="/login" prefetch={false}>
                 <Button className="bg-cyan-600 text-white hover:bg-cyan-500">
                   Login to Continue
                 </Button>

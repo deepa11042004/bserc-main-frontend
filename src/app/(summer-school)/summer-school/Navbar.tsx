@@ -38,6 +38,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             href="/"
+            prefetch={false}
             className="flex items-center gap-2"
             onClick={closeMenu}
           >
@@ -60,6 +61,7 @@ export default function Navbar() {
               <li key={item.label}>
                 <Link
                   href={item.href}
+                  prefetch={false}
                   className="hover:text-gray-400  transition-colors"
                 >
                   {item.label}
@@ -72,6 +74,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center">
             <Link
               href="/summer-school/contact"
+              prefetch={false}
               className="relative px-6 py-2 font-semibold text-white rounded-lg overflow-hidden group"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 opacity-80 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></span>
@@ -105,6 +108,7 @@ export default function Navbar() {
                 <li key={item.label} className="border-b border-white/5">
                   <Link
                     href={item.href}
+                    prefetch={false}
                     onClick={closeMenu}
                     className="block px-5 py-4 hover:text-white hover:bg-white/5 transition"
                   >
@@ -117,6 +121,7 @@ export default function Navbar() {
               <li className="mt-4 px-4">
                 <Link
                   href="/summer-school/contact"
+                  prefetch={false}
                   onClick={closeMenu}
                   className="block text-center py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition"
                 >

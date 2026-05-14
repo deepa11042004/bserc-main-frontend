@@ -302,6 +302,7 @@ export default function HeroSlider() {
                 {/* CTA Button - IMPROVED: Better touch targets and responsive sizing */}
                 <Link
                   href={slide.link || "#"}
+                  prefetch={false}
                   className={`inline-flex items-center justify-center w-full sm:w-auto px-5 sm:px-7 py-3 sm:py-3.5 rounded-full font-medium text-sm sm:text-base text-white backdrop-blur-md border ${accent.border} ${accent.bg} ${accent.hoverBg} ${accent.glow} transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black min-h-[44px] sm:min-h-[48px] ${
                     prefersReducedMotion
                       ? ""

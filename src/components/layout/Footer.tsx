@@ -305,6 +305,7 @@ const Footer = () => {
             <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-3 gap-y-2 text-[10px] sm:text-xs text-slate-400">
               <Link
                 href="/help-desk"
+                prefetch={false}
                 className="transition hover:text-[#3B82F6] active:opacity-80 touch-manipulation whitespace-nowrap"
               >
                 Help Desk
@@ -312,6 +313,7 @@ const Footer = () => {
               <span className="text-slate-600">|</span>
               <Link
                 href="/faq"
+                prefetch={false}
                 className="transition hover:text-[#3B82F6] active:opacity-80 touch-manipulation whitespace-nowrap"
               >
                 FAQ
@@ -319,6 +321,7 @@ const Footer = () => {
               <span className="text-slate-600">|</span>
               <Link
                 href="/bserc-policies/refund-policy"
+                prefetch={false}
                 className="transition hover:text-[#3B82F6] active:opacity-80 touch-manipulation whitespace-nowrap"
               >
                 Refund Policy
@@ -326,6 +329,7 @@ const Footer = () => {
               <span className="text-slate-600">|</span>
               <Link
                 href="/bserc-policies/privacy-policy"
+                prefetch={false}
                 className="transition hover:text-[#3B82F6] active:opacity-80 touch-manipulation whitespace-nowrap"
               >
                 Privacy Policy
@@ -333,6 +337,7 @@ const Footer = () => {
               <span className="text-slate-600">|</span>
               <Link
                 href="/bserc-policies/terms-and-conditions"
+                prefetch={false}
                 className="transition hover:text-[#3B82F6] active:opacity-80 touch-manipulation whitespace-nowrap"
               >
                 Terms and Conditions

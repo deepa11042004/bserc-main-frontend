@@ -87,7 +87,7 @@ const Hero: React.FC = () => {
             <div className="pt-5 flex flex-col sm:flex-row gap-4 justify-center items-center">
               {/* Primary Button */}
 
-              <Link href="/bsercinternship/summer-internship?source=regular">
+              <Link href="/bsercinternship/summer-internship?source=regular" prefetch={false}>
                 <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-cyan-400 to-cyan-600 text-black font-semibold rounded-lg shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-105 transition-all duration-200">
                   Apply Now
                   <ArrowRight className="w-4 h-4" />
@@ -95,7 +95,7 @@ const Hero: React.FC = () => {
               </Link>
 
               {/* Secondary Button */}
-              <Link href="/bsercinternship/summer-internship?source=lateral">
+              <Link href="/bsercinternship/summer-internship?source=lateral" prefetch={false}>
                 <button className="w-full sm:w-auto px-8 py-3.5 border border-gray-600 text-white font-semibold rounded-lg hover:bg-gray-800 hover:border-gray-500 transition-all duration-200">
                   Lateral registration
                 </button>
