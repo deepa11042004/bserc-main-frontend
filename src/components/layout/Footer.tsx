@@ -113,10 +113,26 @@ async function fetchFooterNews(url: string): Promise<FooterNewsApiResponse> {
 // ─────────────────────────────────────────────────────────────
 
 const socialLinks: SocialLink[] = [
-  { icon: FaFacebookF, label: "Facebook", href: "#" },
-  { icon: FaInstagram, label: "Instagram", href: "#" },
-  { icon: FaTwitter, label: "Twitter", href: "#" },
-  { icon: FaLinkedinIn, label: "LinkedIn", href: "#" },
+  {
+    icon: FaFacebookF,
+    label: "Facebook",
+    href: "https://www.facebook.com/people/BsercOfficial/61560678915326/",
+  },
+  {
+    icon: FaInstagram,
+    label: "Instagram",
+    href: "https://www.instagram.com/bserc_official",
+  },
+  {
+    icon: FaTwitter,
+    label: "Twitter",
+    href: "#",
+  },
+  {
+    icon: FaLinkedinIn,
+    label: "LinkedIn",
+    href: "#",
+  },
 ];
 
 const contactItems: ContactItem[] = [
@@ -219,6 +235,8 @@ const Footer = () => {
                   key={label}
                   href={href}
                   aria-label={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-[#0b1224] text-slate-200 transition hover:text-white hover:bg-[#1a2340]"
                 >
                   <Icon size={14} />
