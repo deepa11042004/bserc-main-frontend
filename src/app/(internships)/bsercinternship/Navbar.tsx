@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/bsercinternship" },
@@ -43,6 +44,7 @@ export default function Navbar() {
         <div className="w-full bg-red-600 text-white text-center px-4 py-2 text-sm sm:text-base font-semibold">
           Last Date to Apply for Def-Space Summer Internship: May 27, 2026
         </div>
+        <AnnouncementBanner section="summer-internship" />
         <nav className="max-w-8xl mx-auto flex items-center justify-evenly px-4 sm:px-6 h-[70px]">
           {/* Logo */}
           <Link

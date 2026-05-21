@@ -36,6 +36,7 @@ const routeLabels: Record<string, string> = {
   "faqs": "FAQs",
   "quiz-question": "Quiz Question",
   "footer-news": "Footer News",
+  "announcement-banners": "Announcement Banners",
   "settings": "Settings",
   "help": "Help",
 }
