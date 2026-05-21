@@ -190,8 +190,12 @@ export default async function FeaturedWorkshops() {
   const workshops: any[] = [];
 
   return (
-    <section className="w-full bg-black px-4 py-12 sm:py-16">
-      <div className="mx-auto max-w-6xl">
+    <section className="relative w-full overflow-hidden bg-gradient-to-b from-black via-slate-950 to-black px-4 py-12 sm:py-16">
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-28 right-8 h-64 w-64 rounded-full bg-cyan-500/20 blur-[120px]" />
+        <div className="absolute bottom-0 left-6 h-72 w-72 rounded-full bg-amber-500/10 blur-[140px]" />
+      </div>
+      <div className="relative mx-auto max-w-6xl">
         <h2 className="pb-10 text-center font-serif text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
           Featured Workshops
         </h2>
@@ -212,48 +216,71 @@ export default async function FeaturedWorkshops() {
         {/* Full-bleed image with 19:6 ratio (height = 6/19 of width).
             Uses an intrinsic-ratio wrapper so the image covers full width
             and keeps object-cover to avoid empty space on left/right. */}
-        <div className="mt-6 relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
+        <div className="group mt-6 relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
           <div className="w-full overflow-hidden">
             {/* wrapper keeps aspect ratio: paddingTop = 35% for a slightly taller banner */}
-            <div className="relative w-full" style={{ paddingTop: '37%' }}>
+            <div className="relative w-full" style={{ paddingTop: "37%" }}>
               {/* Background image container (covers full area) */}
               <div
                 aria-hidden
-                className="absolute inset-0 w-full h-full bg-center bg-cover transform scale-105 sm:scale-110 origin-center"
+                className="absolute inset-0 h-full w-full origin-center bg-center bg-cover transition-transform duration-700 ease-out will-change-transform scale-105 sm:scale-110 group-hover:scale-[1.08]"
                 style={{ backgroundImage: `url('${backgroundUrl}')` }}
               />
 
               {/* Overlay content placed on top of the background image. */}
               <div className="absolute inset-0 flex items-center">
                 {/* subtle dark gradient for readability */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent transition-opacity duration-500 group-hover:opacity-90" />
 
                 <div className="relative z-10 mx-auto w-full max-w-6xl px-6">
-                  <div className="grid grid-cols-12 gap-4 items-start">
+                  <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
                     {/* Left hero text */}
-                    <div className="col-span-7 text-white">
+                    <div className="lg:col-span-7 text-white">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-white/80 backdrop-blur">
+                        <span className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]" />
+                        Registrations open
+                      </div>
                       <h1 className="mt-2 font-serif text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight whitespace-pre-line">
                         {title}
                       </h1>
                       <p className="mt-5 max-w-xl text-base sm:text-lg text-white/85">
                         {description}
                       </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {cards.slice(0, 3).map((card, index) => (
+                          <span
+                            key={card.id ?? `${card.title}-${index}`}
+                            className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/75 backdrop-blur transition hover:border-white/35 hover:bg-white/20"
+                          >
+                            {card.title}
+                          </span>
+                        ))}
+                      </div>
                       <div className="mt-6">
                         <Link
                           href="/workshops"
                           prefetch={false}
-                          className="inline-flex rounded-lg border border-blue-600 bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                          className="group/cta inline-flex items-center gap-3 rounded-lg border border-blue-500/70 bg-blue-600/90 px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-25px_rgba(59,130,246,0.9)] transition hover:-translate-y-0.5 hover:border-blue-400 hover:bg-blue-500"
                         >
-                          Register Now
+                          <span>Register Now</span>
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 transition group-hover/cta:translate-x-1 group-hover/cta:bg-white/25">
+                            <svg
+                              aria-hidden
+                              viewBox="0 0 20 20"
+                              className="h-4 w-4 fill-current"
+                            >
+                              <path d="M11.5 4.5 10.09 5.9l3.1 3.1H4.5v2h8.69l-3.1 3.1 1.41 1.4 5.5-5.5-5.5-5.5z" />
+                            </svg>
+                          </span>
                         </Link>
                       </div>
                     </div>
-
-                  {/* Right stacked cards: grid 2x3 to match reference */}
-                    <div className="col-span-5 flex justify-end">
-                      <div className="grid grid-cols-2 gap-3">
+                    {/* Right stacked cards: grid 2x3 to match reference */}
+                    <div className="lg:col-span-5 flex justify-start lg:justify-end">
+                      <div className="grid grid-cols-2 gap-4">
                         {cards.map((card, index) => {
                           const isLeft = index % 2 === 0;
+                          const tiltClass = isLeft ? "hover:rotate-1" : "hover:-rotate-1";
                           const clipPath = isLeft
                             ? 'polygon(0 0, 86% 0, 100% 15%, 100% 85%, 86% 100%, 0 100%, 0 0)'
                             : 'polygon(14% 0, 100% 0, 100% 100%, 14% 100%, 0 85%, 0 15%)';
@@ -261,17 +288,18 @@ export default async function FeaturedWorkshops() {
                           return (
                             <div
                               key={card.id ?? `${card.title}-${index}`}
-                              className="w-44 h-20 rounded-md overflow-hidden shadow-lg relative"
+                              className={`group/card relative h-24 w-40 sm:h-24 sm:w-44 lg:h-28 lg:w-52 overflow-hidden rounded-lg shadow-lg ring-1 ring-white/10 transition duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.03] ${tiltClass} hover:shadow-[0_24px_55px_-30px_rgba(56,189,248,0.75)] hover:ring-white/30 cursor-pointer`}
                               style={{ clipPath }}
                             >
                               <img
                                 src={card.image_url}
                                 alt={card.title}
-                                className="absolute inset-0 w-full h-full object-cover"
+                                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover/card:scale-110"
                               />
-                              <div className="absolute inset-0 bg-black/40" />
+                              <div className="absolute inset-0 bg-black/40 transition-opacity duration-300 group-hover/card:opacity-60" />
+                              <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/30 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100" />
                               <div className="absolute inset-0 flex items-center justify-center px-2">
-                                <span className="text-white text-[11px] sm:text-xs font-bold text-center uppercase leading-tight">
+                                <span className="text-white text-[11px] sm:text-xs font-bold text-center uppercase leading-tight drop-shadow">
                                   {card.title}
                                 </span>
                               </div>
