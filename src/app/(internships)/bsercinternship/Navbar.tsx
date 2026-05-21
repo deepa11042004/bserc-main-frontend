@@ -18,15 +18,23 @@ const NAV_ITEMS = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [brochureOpen, setBrochureOpen] = useState(false);
 
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    document.body.style.overflow = mobileOpen || brochureOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, brochureOpen]);
 
   const closeMenu = () => setMobileOpen(false);
+  const openBrochure = () => setBrochureOpen(true);
+  const closeBrochure = () => setBrochureOpen(false);
+
+  const handleBrochureClick = () => {
+    closeMenu();
+    openBrochure();
+  };
 
   return (
     <>
@@ -72,7 +80,22 @@ export default function Navbar() {
           </ul>
 
            {/* Desktop Right */}
-          <div className="hidden lg:flex items-center">
+          <div className="hidden lg:flex items-center gap-3">
+            <button
+              type="button"
+              onClick={openBrochure}
+              aria-haspopup="dialog"
+              aria-expanded={brochureOpen}
+              className="group flex items-center gap-2.5 rounded-xl border border-rose-300/40 bg-gradient-to-r from-rose-800 via-red-700 to-red-600 px-3.5 py-1.5 text-left transition hover:from-rose-900 hover:via-red-800 hover:to-red-700"
+            >
+              <span className="h-2 w-2 rounded-full bg-rose-200 shadow-[0_0_10px_rgba(251,113,133,0.65)]" />
+              <span className="flex flex-col leading-tight">
+                <span className="text-[11px] font-semibold text-white">BROCHURE</span>
+                <span className="text-[10px] text-rose-100/85">
+                  Def-Space info
+                </span>
+              </span>
+            </button>
             <Link
               href="/bsercinternship/contact"
               prefetch={false}
@@ -118,7 +141,31 @@ export default function Navbar() {
                 </li>
               ))}
 
-              {/* Login Button */}
+              {/* Brochure Button */}
+              <li className="mt-4 px-4">
+                <button
+                  type="button"
+                  onClick={handleBrochureClick}
+                  className="w-full rounded-xl border border-rose-300/40 bg-gradient-to-r from-rose-800 via-red-700 to-red-600 px-4 py-3 text-left transition hover:from-rose-900 hover:via-red-800 hover:to-red-700"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="h-2 w-2 rounded-full bg-rose-200 shadow-[0_0_10px_rgba(251,113,133,0.65)]" />
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-[11px] font-semibold text-white">
+                        BROCHURE
+                      </span>
+                      <span className="text-[10px] text-rose-100/85">
+                        Def-Space info
+                      </span>
+                      <span className="mt-1 text-[10px] text-rose-100/70">
+                        click to downlode Brochur
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              </li>
+
+              {/* Contact Button */}
               <li className="mt-4 px-4">
                 <Link
                   href="/bsercinternship/contact"
@@ -132,6 +179,68 @@ export default function Navbar() {
             </ul>
           </div>
         </>
+      )}
+
+      {brochureOpen && (
+        <div
+          className="fixed inset-0 z-[70]"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={closeBrochure}
+          />
+          <div className="relative mx-auto mt-20 w-[92%] max-w-lg rounded-xl bg-[#0a0c16] border border-white/10 p-6 text-white shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <h2 className="text-lg font-semibold">Download Brochure for more information</h2>
+              <button
+                type="button"
+                onClick={closeBrochure}
+                className="text-gray-300 hover:text-white transition"
+                aria-label="Close dialog"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="mt-4">
+              <p className="text-sm text-rose-50/90">
+                Explore program tracks, schedules, eligibility, and support
+                details for the Def-Space Summer School and Def-Space Summer
+                Internship.
+              </p>
+              <p className="mt-2 text-sm text-rose-100/90">
+                For more information, check the brochure.
+              </p>
+            </div>
+            <div className="mt-5 flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/summer-school"
+                prefetch={false}
+                className="w-full text-center py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-rose-800 via-red-700 to-red-600 hover:from-rose-900 hover:via-red-800 hover:to-red-700 transition"
+              >
+                <span className="flex flex-col items-center leading-tight">
+                  <span>SUMMER SCHOOL</span>
+                  <span className="mt-1 text-[10px] text-rose-100/70">
+                    click to downlode Brochure
+                  </span>
+                </span>
+              </Link>
+              <Link
+                href="/bsercinternship"
+                prefetch={false}
+                className="w-full text-center py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-rose-800 via-red-700 to-red-600 hover:from-rose-900 hover:via-red-800 hover:to-red-700 transition"
+              >
+                <span className="flex flex-col items-center leading-tight">
+                  <span>SUMMER INTERNSHIP</span>
+                  <span className="mt-1 text-[10px] text-rose-100/70">
+                    click to downlode Brochure
+                  </span>
+                </span>
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
