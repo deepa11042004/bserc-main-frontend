@@ -13,6 +13,7 @@ import {
   Contact,
   UserRoundSearch,
   Images,
+  ImageIcon,
   Home,
   GraduationCap,
   Building2,
@@ -182,6 +183,14 @@ export default function Sidebar() {
                     isActive={normalizedPath === "/admin/sliders"}
                   >
                     Hero Sliders
+                  </NavItem>
+                  <NavItem
+                    href="/admin/featured-workshops"
+                    icon={ImageIcon}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath === "/admin/featured-workshops"}
+                  >
+                    Featured Workshops
                   </NavItem>
                 </div>
               </div>
