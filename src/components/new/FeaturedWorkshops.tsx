@@ -215,14 +215,10 @@ export default async function FeaturedWorkshops() {
 
               <div className="grid grid-cols-2 gap-3">
                 {mobileCards.map((card, index) => {
-                  const isWideTile = index === 0 || index === 3;
-
                   return (
                     <div
                       key={card.id ?? `${card.title}-${index}`}
-                      className={`relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg ${
-                        isWideTile ? "aspect-[4/3]" : "aspect-square"
-                      }`}
+                      className="relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg"
                     >
                       <img
                         src={card.image_url}
