@@ -9,6 +9,7 @@ import {
   Plane,
  Send,
  Brain,
+ FileText,
 } from "lucide-react";
 
 type Feature = {
@@ -20,40 +21,67 @@ type Feature = {
 
 const features: Feature[] = [
   {
-    title: "Advanced Rocketry",
+    title: "Generative Artificial Intelligence (AI)",
     description:
-      "Design & Launch Systems, Propulsion Engineering, Payload Development",
-    icon: Rocket,
+      "Foundations and applications of generative models, large language models and diffusion models.",
+    icon: Brain,
     accent: "blue",
   },
   {
-    title: "Defence Drone Tech",
-    description: "Tactical Applications, Surveillance Systems, Flight Control",
+    title:
+      "Cyber Security & Digital Forensics in Space, Defence, UAV & AI Ecosystems",
+    description:
+      "Includes: AI-Based Space Object Detection and Collision Prediction Framework; Cyber Security Framework for Satellite Communication Systems; Quantum-Secure Satellite Communication Framework for Space Networks; Autonomous UAV System for Space Terrain Mapping and Environmental Intelligence; Autonomous Space Exploration Rover using AI and IoT.",
     icon: Shield,
     accent: "orange",
   },
   {
-    title: "Air Taxi & UAVs",
-    description: "Next-Gen Drones, Urban Air Mobility, Fleet Management",
-    icon: Send ,
+    title: "Advanced Drone Technology (Air Taxi & Defence Drone)",
+    description: "Air taxi systems, defence UAV architectures and autonomy for next-gen drones.",
+    icon: Send,
     accent: "blue",
   },
   {
-    title: "Aircraft Design",
-    description: "Aerodynamics, CFD Simulation, Structural Analysis",
+    title: "Aircraft Design Technology",
+    description: "Aerodynamics, CFD simulation, structural design and systems integration for aircraft.",
     icon: Plane,
     accent: "orange",
   },
   {
-    title: "Robotics",
-    description: "Automation, Autonomous Systems, Sensor Integration",
-    icon: Bot ,
+    title: "Rocketry Design Technology",
+    description: "Propulsion systems, launch vehicle design, staging and payload integration.",
+    icon: Rocket,
     accent: "blue",
   },
   {
-    title: "Artificial Intelligence",
-    description: "ML Fundamentals, Neural Networks, Real-world Applications",
+    title: "EV Technology and Charging Infrastructure for Future Engineers",
+    description: "Electric vehicle powertrains, battery systems and charging infrastructure design.",
+    icon: Send,
+    accent: "orange",
+  },
+  {
+    title: "Robotics Design Technology",
+    description: "Robotic platforms, control systems, perception and embedded integrations.",
+    icon: Bot,
+    accent: "blue",
+  },
+  {
+    title:
+      "AI-Based Military Intelligence and Threat Analysis Dashboard using Machine Learning and Data Analytics",
+    description: "ML-driven threat analysis, data pipelines, visualization and decision-support dashboards.",
     icon: Brain,
+    accent: "orange",
+  },
+  {
+    title: "Rocket Velocities and Orbital Speeds",
+    description: "Orbital mechanics, delta-v budgeting, transfer maneuvers and re-entry dynamics.",
+    icon: Rocket,
+    accent: "blue",
+  },
+  {
+    title: "Case Studies",
+    description: "Real-world mission case studies, post-mortems and applied engineering lessons.",
+    icon: FileText,
     accent: "orange",
   },
 ];
@@ -70,7 +98,7 @@ export const CoreTech: React.FC = () => {
           </h3>
 
           <p className="text-center pb-5 text-gray-400  text-sm sm:text-base max-w-2xl mx-auto">
-            Master cutting-edge technologies across six specialized tracks
+            Master cutting-edge technologies across core engineering domains
           </p>
         </div>
 
