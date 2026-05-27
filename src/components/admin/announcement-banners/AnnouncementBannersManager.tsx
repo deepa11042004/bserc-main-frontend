@@ -562,7 +562,12 @@ export default function AnnouncementBannersManager() {
                     sortedItems.map((item) => (
                       <TableRow key={item.id} className="border-zinc-800">
                         <TableCell className="align-top text-zinc-200 text-sm font-medium">
-                          {item.title}
+                          <span
+                            className="block max-w-[48ch] truncate"
+                            title={item.title}
+                          >
+                            {item.title}
+                          </span>
                         </TableCell>
                         <TableCell className="align-top text-zinc-300 text-xs sm:text-sm">
                           {getSectionLabel(item.section)}

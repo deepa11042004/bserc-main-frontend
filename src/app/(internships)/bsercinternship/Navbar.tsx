@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Megaphone, Menu, X } from "lucide-react";
 import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 
 const NAV_ITEMS = [
@@ -16,6 +16,9 @@ const NAV_ITEMS = [
   { label: "Reg.Mentor", href: "/bsercinternship/mentor-registration" },
   { label: "REG.INSTITUTION", href: "/bsercinternship/institutional-registration" },
 ];
+
+const MOVING_NOTIFICATION =
+  "Registration through the examination process for 1,150 seats closes today at 11:59 PM. Applicants who miss this deadline may apply through lateral entry, which remains open until 16 June. Admit cards and offers will be sent on 1 or 2 June. Corrections to applications (name, email address, etc.) can be made from 2 June to 6 June until 5:00 PM.";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -45,6 +48,18 @@ export default function Navbar() {
           Last Date to Apply for Def-Space Summer Internship: May 27, 2026
         </div>
         <AnnouncementBanner section="summer-internship" />
+        <div className="w-full overflow-hidden border-y border-amber-300/20 bg-amber-100/10 text-amber-100">
+          <div className="ticker-track flex w-max whitespace-nowrap py-2 text-xs font-semibold tracking-wide sm:text-sm">
+            <span className="px-4 pr-10 inline-flex items-center gap-2">
+              <Megaphone size={18} className="shrink-0 text-red-500" aria-hidden="true" />
+              {MOVING_NOTIFICATION}
+            </span>
+            <span className="px-4 pr-10 inline-flex items-center gap-2" aria-hidden="true">
+              <Megaphone size={18} className="shrink-0 text-red-500" aria-hidden="true" />
+              {MOVING_NOTIFICATION}
+            </span>
+          </div>
+        </div>
         <nav className="max-w-8xl mx-auto flex items-center justify-evenly px-4 sm:px-6 h-[70px]">
           {/* Logo */}
           <Link
@@ -182,6 +197,22 @@ export default function Navbar() {
           </div>
         </>
       )}
+
+      <style jsx>{`
+        .ticker-track {
+          will-change: transform;
+          animation: internshipTicker 26s linear infinite;
+        }
+
+        @keyframes internshipTicker {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
 
       {brochureOpen && (
         <div
