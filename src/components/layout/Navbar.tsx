@@ -305,7 +305,7 @@ export default function Navbar() {
             Click here
           </Link>
         </div>
-        <div className="w-full bg-indigo-900 text-white text-center px-4 py-2 text-sm sm:text-base flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+        {/* <div className="w-full bg-indigo-900 text-white text-center px-4 py-2 text-sm sm:text-base flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
           <span className="font-semibold">🎓 National Technology Day — Advanced Drone Technology</span>
           <span className="text-indigo-300 hidden sm:inline">|</span>
           <a
@@ -324,6 +324,9 @@ export default function Navbar() {
           >
             ▶ Watch Recording
           </a>
+        </div> */}
+        <div className="w-full bg-indigo-900 text-white text-center px-4 py-2 text-sm sm:text-base flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+          <span className="font-semibold">📢 Admit cards and offer letters will be shared on your registered email address on 1st June 2026</span>
         </div>
         <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-[70px]">
           {/* Logo Left */}
