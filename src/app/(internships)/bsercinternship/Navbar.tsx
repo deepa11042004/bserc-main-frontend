@@ -63,6 +63,9 @@ export default function Navbar() {
         <div className="w-full bg-indigo-900 text-white text-center px-4 py-2 text-sm sm:text-base flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
           <span className="font-semibold">📢 Admit cards and offer letters will be shared on your registered email address on 1st June 2026</span>
         </div>
+        <div className="w-full bg-[#DC2626] text-white text-center px-4 py-2 text-sm sm:text-base flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+          <span className="font-semibold">📢 Registration via the examination is closed for all 1,150 seats. Applicants who still wish to enroll may apply through the Lateral Entry route. <Link href="/bsercinternship/registration-lateral" prefetch={false}><u className="underline text-indigo-400">Apply here</u></Link></span>
+        </div>
         <nav className="max-w-8xl mx-auto flex items-center justify-evenly px-4 sm:px-6 h-[70px]">
           {/* Logo */}
           <Link
@@ -91,7 +94,7 @@ export default function Navbar() {
                 <Link
                   href={item.href}
                   prefetch={false}
-                   className="hover:text-gray-400 uppercase transition-colors"
+                  className="hover:text-gray-400 uppercase transition-colors"
                 >
                   {item.label}
                 </Link>
@@ -99,7 +102,7 @@ export default function Navbar() {
             ))}
           </ul>
 
-           {/* Desktop Right */}
+          {/* Desktop Right */}
           <div className="hidden lg:flex items-center gap-3">
             <button
               type="button"
@@ -193,7 +196,7 @@ export default function Navbar() {
                   onClick={closeMenu}
                   className="block text-center py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition"
                 >
-                 CONTACT US
+                  CONTACT US
                 </Link>
               </li>
             </ul>
