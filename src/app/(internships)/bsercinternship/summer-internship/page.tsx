@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Search, ChevronDown, ArrowRight, Upload } from "lucide-react";
+import { Check, Search, ChevronDown, ArrowRight, Upload, AlertCircle } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -278,10 +278,10 @@ function FormSelect({
           ))}
         </select>
         {/* Custom select dropdown arrow */}
-          
+
         <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-           
-          <ChevronDown className="w-5 h-5 text-zinc-500"/>
+
+          <ChevronDown className="w-5 h-5 text-zinc-500" />
         </div>
       </div>
       {helperText && (
@@ -370,9 +370,9 @@ export default function InternshipApplicationForm() {
 
   const activeResponse = submitStatus
     ? {
-        type: submitStatus.type,
-        message: submitStatus.message,
-      }
+      type: submitStatus.type,
+      message: submitStatus.message,
+    }
     : null;
 
   useEffect(() => {
@@ -759,7 +759,7 @@ export default function InternshipApplicationForm() {
 
         openPaymentRetryPrompt(
           response.error?.description
-            || "Payment failed or was not completed. Would you like to try again?",
+          || "Payment failed or was not completed. Would you like to try again?",
         );
 
         setIsSubmitting(false);
@@ -867,47 +867,70 @@ export default function InternshipApplicationForm() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Section 1 */}
-          <CardSection title="1. INTERNSHIP DETAILS / इंटर्नशिप विवरण">
-            <div className="space-y-2">
-              <FormField
-                id="internshipName"
-                name="internshipName"
-                label="Internship Name / इंटर्नशिप का नाम"
-                value={internshipName}
-                disabled
-              />
-              <FormField
-                id="designation"
-                name="designation"
-                label="Designation of Internship / इंटर्नशिप का प्रकार"
-                value={internshipDesignation}
-                disabled
-              />
-              <FormField
-                id="registrationType"
-                name="registrationType"
-                label="Registration Type / पंजीकरण प्रकार"
-                value={registrationTypeLabel}
-                disabled
-              />
-            </div>
-          </CardSection>
+        {isLateralRegistration ? (
+          <form onSubmit={handleSubmit}>
+            {/* Section 1 */}
+            <CardSection title="1. INTERNSHIP DETAILS / इंटर्नशिप विवरण">
+              <div className="space-y-2">
+                <FormField
+                  id="internshipName"
+                  name="internshipName"
+                  label="Internship Name / इंटर्नशिप का नाम"
+                  value={internshipName}
+                  disabled
+                />
+                <FormField
+                  id="designation"
+                  name="designation"
+                  label="Designation of Internship / इंटर्नशिप का प्रकार"
+                  value={internshipDesignation}
+                  disabled
+                />
+                <FormField
+                  id="registrationType"
+                  name="registrationType"
+                  label="Registration Type / पंजीकरण प्रकार"
+                  value={registrationTypeLabel}
+                  disabled
+                />
+              </div>
+            </CardSection>
 
-          {/* Section 2 */}
-          <CardSection title="2. APPLICANT'S PERSONAL DETAILS / आवेदक का व्यक्तिगत विवरण">
-            <div className="space-y-2">
-              <FormField
-                id="fullName"
-                name="fullName"
-                label="Applicant's Full Name / आवेदक का पूरा नाम"
-                required
-                value={formData.fullName}
-                onChange={handleChange}
-              />
-              {isLateralRegistration ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+            {/* Section 2 */}
+            <CardSection title="2. APPLICANT'S PERSONAL DETAILS / आवेदक का व्यक्तिगत विवरण">
+              <div className="space-y-2">
+                <FormField
+                  id="fullName"
+                  name="fullName"
+                  label="Applicant's Full Name / आवेदक का पूरा नाम"
+                  required
+                  value={formData.fullName}
+                  onChange={handleChange}
+                />
+                {isLateralRegistration ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                    <FormField
+                      id="guardianName"
+                      name="guardianName"
+                      label="Guardian Name / अभिभावक का नाम"
+                      required
+                      value={formData.guardianName}
+                      onChange={handleChange}
+                    />
+                    <FormSelect
+                      id="category"
+                      name="category"
+                      label="Category"
+                      placeholder="--Select Category--"
+                      options={LATERAL_CATEGORY_OPTIONS}
+                      required
+                      value={formData.category}
+                      onChange={handleChange}
+                      infoText={lateralCategoryInfoText}
+                      helperText="EWS (family income below ₹7 lakh): Registration fee ₹1350"
+                    />
+                  </div>
+                ) : (
                   <FormField
                     id="guardianName"
                     name="guardianName"
@@ -916,249 +939,528 @@ export default function InternshipApplicationForm() {
                     value={formData.guardianName}
                     onChange={handleChange}
                   />
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
                   <FormSelect
-                    id="category"
-                    name="category"
-                    label="Category"
-                    placeholder="--Select Category--"
-                    options={LATERAL_CATEGORY_OPTIONS}
+                    id="gender"
+                    name="gender"
+                    label="Gender / लिंग"
+                    placeholder="--Select Gender--"
+                    options={[
+                      "Male / पुरुष",
+                      "Female / महिला",
+                      "Other / अन्य",
+                      "Prefer not to say ",
+                    ]}
                     required
-                    value={formData.category}
+                    value={formData.gender}
                     onChange={handleChange}
-                    infoText={lateralCategoryInfoText}
-                    helperText="EWS (family income below ₹7 lakh): Registration fee ₹1350"
+                  />
+                  <FormField
+                    id="dob"
+                    name="dob"
+                    type="date"
+                    label="Date of Birth / जन्म दिनांक"
+                    placeholder="mm/dd/yyyy"
+                    required
+                    value={formData.dob}
+                    onChange={handleChange}
                   />
                 </div>
-              ) : (
-                <FormField
-                  id="guardianName"
-                  name="guardianName"
-                  label="Guardian Name / अभिभावक का नाम"
-                  required
-                  value={formData.guardianName}
-                  onChange={handleChange}
-                />
-              )}
+              </div>
+            </CardSection>
 
+            {/* Section 3 */}
+            <CardSection title="3. CONTACT DETAILS / संपर्क विवरण">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                <FormSelect
-                  id="gender"
-                  name="gender"
-                  label="Gender / लिंग"
-                  placeholder="--Select Gender--"
-                  options={[
-                    "Male / पुरुष",
-                    "Female / महिला",
-                    "Other / अन्य",
-                    "Prefer not to say ",
-                  ]}
+                <FormField
+                  id="mobile"
+                  name="mobile"
+                  type="tel"
+                  label="Mobile Number / मोबाइल नंबर"
+                  placeholder="Enter mobile number"
                   required
-                  value={formData.gender}
+                  value={formData.mobile}
                   onChange={handleChange}
                 />
                 <FormField
-                  id="dob"
-                  name="dob"
-                  type="date"
-                  label="Date of Birth / जन्म दिनांक"
-                  placeholder="mm/dd/yyyy"
+                  id="email"
+                  name="email"
+                  type="email"
+                  label="Email Address / ईमेल पता"
                   required
-                  value={formData.dob}
+                  value={formData.email}
                   onChange={handleChange}
                 />
               </div>
-            </div>
-          </CardSection>
-
-          {/* Section 3 */}
-          <CardSection title="3. CONTACT DETAILS / संपर्क विवरण">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
               <FormField
-                id="mobile"
-                name="mobile"
-                type="tel"
-                label="Mobile Number / मोबाइल नंबर"
-                placeholder="Enter mobile number"
-                required
-                value={formData.mobile}
-                onChange={handleChange}
-              />
-              <FormField
-                id="email"
-                name="email"
+                id="altEmail"
+                name="altEmail"
                 type="email"
-                label="Email Address / ईमेल पता"
+                label="Alternative Email / वैकल्पिक ईमेल पता"
                 required
-                value={formData.email}
+                value={formData.altEmail}
                 onChange={handleChange}
               />
+            </CardSection>
+
+            {/* Section 4 */}
+            <CardSection title="4. PERMANENT ADDRESS DETAILS / स्थायी पता विवरण">
+              <FormField
+                id="address"
+                name="address"
+                label="Address / पता"
+                required
+                isTextarea
+                value={formData.address}
+                onChange={handleChange}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6">
+                <FormField
+                  id="city"
+                  name="city"
+                  label="City Name / शहर का नाम"
+                  required
+                  value={formData.city}
+                  onChange={handleChange}
+                />
+                <FormField
+                  id="state"
+                  name="state"
+                  label="State / राज्य"
+                  required
+                  value={formData.state}
+                  onChange={handleChange}
+                />
+                <FormField
+                  id="pinCode"
+                  name="pinCode"
+                  label="Pin Code / पिन कोड"
+                  required
+                  value={formData.pinCode}
+                  onChange={handleChange}
+                />
+              </div>
+            </CardSection>
+
+            {/* Section 5 */}
+            <CardSection title="5. EDUCATIONAL / QUALIFICATION DETAILS / शैक्षिक / योग्यता का विवरण">
+              <FormField
+                id="institution"
+                name="institution"
+                label="Institution Name / संस्थान का नाम"
+                required
+                value={formData.institution}
+                onChange={handleChange}
+              />
+              <FormSelect
+                id="qualification"
+                name="qualification"
+                label="Educational Qualification / शैक्षिक योग्यता"
+                placeholder="--Select Qualification--"
+                options={["B.Tech", "M.Tech", "BCA", "MCA", "B.Sc", "Other"]}
+                required
+                value={formData.qualification}
+                onChange={handleChange}
+              />
+            </CardSection>
+
+            {/* Section 6 */}
+            <CardSection title="6. IDENTIFICATION DETAILS / पहचान का विवरण">
+              <label className="block text-zinc-100 text-[13px] font-semibold mb-3">
+                Upload Passport Size Photo / पासपोर्ट साइज फोटो अपलोड करें{" "}
+                <span className="text-red-500 ml-0.5">*</span>
+              </label>
+              <input
+                key={photoInputKey}
+                id="passport_photo"
+                type="file"
+                name="passport_photo"
+                className="sr-only"
+                accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+                onChange={handlePhotoChange}
+              />
+              <label
+                htmlFor="passport_photo"
+                className="w-full border border-dashed border-[#3a402a] rounded-xl py-14 flex flex-col items-center justify-center bg-[#111111]/50 hover:bg-[#161616] transition-colors cursor-pointer group"
+              >
+                <Upload className="w-6 h-6 text-zinc-400 mb-3 group-hover:text-zinc-200 transition-colors" />
+                <p className="text-zinc-400 text-[13px] group-hover:text-zinc-300 transition-colors">
+                  Click to upload photo (Max 800KB to 1MB)
+                </p>
+                <p className="mt-1 text-[11px] text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                  Supported: JPG, PNG, WEBP, HEIC, HEIF
+                </p>
+                {passportPhotoName && (
+                  <p className="mt-2 text-xs text-[#d4ff33]">Selected: {passportPhotoName}</p>
+                )}
+              </label>
+            </CardSection>
+
+            {/* Declaration Section */}
+            <div className="bg-[#181818] rounded-xl border border-[#2a301a] p-6 mb-12">
+              <label className="flex items-start gap-4 cursor-pointer group">
+                <div className="pt-1 relative flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    name="declaration"
+                    required
+                    checked={formData.declaration}
+                    onChange={handleChange}
+                    className="peer w-5 h-5 rounded-sm bg-white border-none appearance-none checked:bg-orange-500 cursor-pointer flex-shrink-0 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-[#181818]"
+                  />
+
+                  {/* The Checkmark Arrow */}
+                  <svg
+                    className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="4"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+
+                <p className="text-[13px] text-zinc-300 leading-relaxed text-justify group-hover:text-zinc-100 transition-colors">
+                  I hereby declare that the information given above and in the
+                  enclosed documents is true to the best of my knowledge and
+                  belief and nothing has been concealed therein. I understand that
+                  if the information given by me is proved false/not true, all the
+                  benefits availed by me shall be withdrawn. / मैं घोषणा करता हूँ
+                  कि ऊपर और संलग्न दस्तावेजों में दी गई जानकारी मेरी सर्वोत्तम
+                  जानकारी और विश्वास के अनुसार सत्य है और इसमें कुछ भी छिपाया नहीं
+                  गया है। मैं समझता हूँ कि यदि मेरे द्वारा दी गई जानकारी झूठी हुई
+                  तो मेरे द्वारा प्राप्त किए गए सभी लाभ वापस ले लिए जाएंगे।
+                </p>
+              </label>
             </div>
-            <FormField
-              id="altEmail"
-              name="altEmail"
-              type="email"
-              label="Alternative Email / वैकल्पिक ईमेल पता"
-              required
-              value={formData.altEmail}
-              onChange={handleChange}
-            />
-          </CardSection>
 
-          {/* Section 4 */}
-          <CardSection title="4. PERMANENT ADDRESS DETAILS / स्थायी पता विवरण">
-            <FormField
-              id="address"
-              name="address"
-              label="Address / पता"
-              required
-              isTextarea
-              value={formData.address}
-              onChange={handleChange}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6">
-              <FormField
-                id="city"
-                name="city"
-                label="City Name / शहर का नाम"
-                required
-                value={formData.city}
-                onChange={handleChange}
-              />
-              <FormField
-                id="state"
-                name="state"
-                label="State / राज्य"
-                required
-                value={formData.state}
-                onChange={handleChange}
-              />
-              <FormField
-                id="pinCode"
-                name="pinCode"
-                label="Pin Code / पिन कोड"
-                required
-                value={formData.pinCode}
-                onChange={handleChange}
-              />
+            {/* Submit Button */}
+            <div className="border-t border-[#262626] pt-8 flex justify-center">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`text-black font-semibold text-sm px-8 py-3.5 rounded-full flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-[#d4ff33]/10 ${isSubmitting
+                    ? "bg-zinc-700 text-zinc-300 cursor-not-allowed"
+                    : "bg-orange-500 hover:bg-orange-600"
+                  }`}
+              >
+                {isSubmitting ? "Processing..." : "Proceed to Pay"}
+                <ArrowRight className="w-5 h-5" />
+              </button>
             </div>
-          </CardSection>
-
-          {/* Section 5 */}
-          <CardSection title="5. EDUCATIONAL / QUALIFICATION DETAILS / शैक्षिक / योग्यता का विवरण">
-            <FormField
-              id="institution"
-              name="institution"
-              label="Institution Name / संस्थान का नाम"
-              required
-              value={formData.institution}
-              onChange={handleChange}
-            />
-            <FormSelect
-              id="qualification"
-              name="qualification"
-              label="Educational Qualification / शैक्षिक योग्यता"
-              placeholder="--Select Qualification--"
-              options={["B.Tech", "M.Tech", "BCA", "MCA", "B.Sc", "Other"]}
-              required
-              value={formData.qualification}
-              onChange={handleChange}
-            />
-          </CardSection>
-
-          {/* Section 6 */}
-          <CardSection title="6. IDENTIFICATION DETAILS / पहचान का विवरण">
-            <label className="block text-zinc-100 text-[13px] font-semibold mb-3">
-              Upload Passport Size Photo / पासपोर्ट साइज फोटो अपलोड करें{" "}
-              <span className="text-red-500 ml-0.5">*</span>
-            </label>
-            <input
-              key={photoInputKey}
-              id="passport_photo"
-              type="file"
-              name="passport_photo"
-              className="sr-only"
-              accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
-              onChange={handlePhotoChange}
-            />
-            <label
-              htmlFor="passport_photo"
-              className="w-full border border-dashed border-[#3a402a] rounded-xl py-14 flex flex-col items-center justify-center bg-[#111111]/50 hover:bg-[#161616] transition-colors cursor-pointer group"
-            >
-              <Upload className="w-6 h-6 text-zinc-400 mb-3 group-hover:text-zinc-200 transition-colors" />
-              <p className="text-zinc-400 text-[13px] group-hover:text-zinc-300 transition-colors">
-                Click to upload photo (Max 800KB to 1MB)
+          </form>
+        ) : (
+          <>
+            {/* Announcement Section for closed registration */}
+            <div className="mt-8 bg-zinc-900/50 border border-orange-500/20 rounded-2xl p-8 md:p-12 text-center max-w-3xl mx-auto shadow-2xl backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute -top-10 -left-10 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl pointer-events-none"></div>
+              
+              <div className="flex justify-center mb-6">
+                <div className="p-4 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-500 animate-pulse">
+                  <AlertCircle className="w-10 h-10" />
+                </div>
+              </div>
+              
+              <h2 className="text-xl md:text-2xl font-serif font-semibold text-white mb-4">
+                Registration Closed
+              </h2>
+              
+              <p className="text-zinc-300 text-base md:text-lg leading-relaxed mb-8 max-w-2xl mx-auto">
+                Registration via the examination is closed for all 1,150 seats. 
+                Applicants who still wish to enroll may apply through the Lateral Entry route.
               </p>
-              <p className="mt-1 text-[11px] text-zinc-500 group-hover:text-zinc-400 transition-colors">
-                Supported: JPG, PNG, WEBP, HEIC, HEIF
-              </p>
-              {passportPhotoName && (
-                <p className="mt-2 text-xs text-[#d4ff33]">Selected: {passportPhotoName}</p>
-              )}
-            </label>
-          </CardSection>
+              
+              <div className="flex justify-center">
+                <a
+                  href="?source=lateral"
+                  className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold text-sm px-8 py-3.5 rounded-full transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-orange-500/20 cursor-pointer"
+                >
+                  Apply via Lateral Entry Route
+                  <ArrowRight className="w-5 h-5" />
+                </a>
+              </div>
+            </div>
 
-         {/* Declaration Section */}
-<div className="bg-[#181818] rounded-xl border border-[#2a301a] p-6 mb-12">
-  <label className="flex items-start gap-4 cursor-pointer group">
-    <div className="pt-1 relative flex items-center justify-center">
-      <input
-        type="checkbox"
-        name="declaration"
-        required
-        checked={formData.declaration}
-        onChange={handleChange}
-        className="peer w-5 h-5 rounded-sm bg-white border-none appearance-none checked:bg-orange-500 cursor-pointer flex-shrink-0 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-[#181818]"
-      />
-      
-      {/* The Checkmark Arrow */}
-      <svg 
-        className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" 
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24" 
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          strokeWidth="4" 
-          d="M5 13l4 4L19 7"
-        />
-      </svg>
-     
-      
-    </div>
-    
-    <p className="text-[13px] text-zinc-300 leading-relaxed text-justify group-hover:text-zinc-100 transition-colors">
-      I hereby declare that the information given above and in the
-      enclosed documents is true to the best of my knowledge and
-      belief and nothing has been concealed therein. I understand that
-      if the information given by me is proved false/not true, all the
-      benefits availed by me shall be withdrawn. / मैं घोषणा करता हूँ
-      कि ऊपर और संलग्न दस्तावेजों में दी गई जानकारी मेरी सर्वोत्तम
-      जानकारी और विश्वास के अनुसार सत्य है और इसमें कुछ भी छिपाया नहीं
-      गया है। मैं समझता हूँ कि यदि मेरे द्वारा दी गई जानकारी झूठी हुई
-      तो मेरे द्वारा प्राप्त किए गए सभी लाभ वापस ले लिए जाएंगे।
-    </p>
-  </label>
-</div>
+            {/* 
+              REGULAR REGISTRATION FORM (Temporarily Commented Out)
+              To resume regular registration, uncomment the form below and adjust conditions.
 
-          {/* Submit Button */}
-          <div className="border-t border-[#262626] pt-8 flex justify-center">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`text-black font-semibold text-sm px-8 py-3.5 rounded-full flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-[#d4ff33]/10 ${
-                isSubmitting
-                  ? "bg-zinc-700 text-zinc-300 cursor-not-allowed"
-                  : "bg-orange-500 hover:bg-orange-600"
-              }`}
-            >
-              {isSubmitting ? "Processing..." : "Proceed to Pay"}
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
-        </form>
+              <form onSubmit={handleSubmit}>
+                // Section 1
+                <CardSection title="1. INTERNSHIP DETAILS / इंटर्नशिप विवरण">
+                  <div className="space-y-2">
+                    <FormField
+                      id="internshipName"
+                      name="internshipName"
+                      label="Internship Name / इंटर्नशिप का नाम"
+                      value={internshipName}
+                      disabled
+                    />
+                    <FormField
+                      id="designation"
+                      name="designation"
+                      label="Designation of Internship / इंटर्नशिप का प्रकार"
+                      value={internshipDesignation}
+                      disabled
+                    />
+                    <FormField
+                      id="registrationType"
+                      name="registrationType"
+                      label="Registration Type / पंजीकरण प्रकार"
+                      value={registrationTypeLabel}
+                      disabled
+                    />
+                  </div>
+                </CardSection>
+
+                // Section 2
+                <CardSection title="2. APPLICANT'S PERSONAL DETAILS / आवेदक का व्यक्तिगत विवरण">
+                  <div className="space-y-2">
+                    <FormField
+                      id="fullName"
+                      name="fullName"
+                      label="Applicant's Full Name / आवेदक का पूरा नाम"
+                      required
+                      value={formData.fullName}
+                      onChange={handleChange}
+                    />
+                    <FormField
+                      id="guardianName"
+                      name="guardianName"
+                      label="Guardian Name / अभिभावक का नाम"
+                      required
+                      value={formData.guardianName}
+                      onChange={handleChange}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                      <FormSelect
+                        id="gender"
+                        name="gender"
+                        label="Gender / लिंग"
+                        placeholder="--Select Gender--"
+                        options={[
+                          "Male / पुरुष",
+                          "Female / महिला",
+                          "Other / अन्य",
+                          "Prefer not to say ",
+                        ]}
+                        required
+                        value={formData.gender}
+                        onChange={handleChange}
+                      />
+                      <FormField
+                        id="dob"
+                        name="dob"
+                        type="date"
+                        label="Date of Birth / जन्म दिनांक"
+                        placeholder="mm/dd/yyyy"
+                        required
+                        value={formData.dob}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                </CardSection>
+
+                // Section 3
+                <CardSection title="3. CONTACT DETAILS / संपर्क विवरण">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                    <FormField
+                      id="mobile"
+                      name="mobile"
+                      type="tel"
+                      label="Mobile Number / मोबाइल नंबर"
+                      placeholder="Enter mobile number"
+                      required
+                      value={formData.mobile}
+                      onChange={handleChange}
+                    />
+                    <FormField
+                      id="email"
+                      name="email"
+                      type="email"
+                      label="Email Address / ईमेल पता"
+                      required
+                      value={formData.email}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <FormField
+                    id="altEmail"
+                    name="altEmail"
+                    type="email"
+                    label="Alternative Email / वैकल्पिक ईमेल पता"
+                    required
+                    value={formData.altEmail}
+                    onChange={handleChange}
+                  />
+                </CardSection>
+
+                // Section 4
+                <CardSection title="4. PERMANENT ADDRESS DETAILS / स्थायी पता विवरण">
+                  <FormField
+                    id="address"
+                    name="address"
+                    label="Address / पता"
+                    required
+                    isTextarea
+                    value={formData.address}
+                    onChange={handleChange}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6">
+                    <FormField
+                      id="city"
+                      name="city"
+                      label="City Name / शहर का नाम"
+                      required
+                      value={formData.city}
+                      onChange={handleChange}
+                    />
+                    <FormField
+                      id="state"
+                      name="state"
+                      label="State / राज्य"
+                      required
+                      value={formData.state}
+                      onChange={handleChange}
+                    />
+                    <FormField
+                      id="pinCode"
+                      name="pinCode"
+                      label="Pin Code / पिन कोड"
+                      required
+                      value={formData.pinCode}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </CardSection>
+
+                // Section 5
+                <CardSection title="5. EDUCATIONAL / QUALIFICATION DETAILS / शैक्षिक / योग्यता का विवरण">
+                  <FormField
+                    id="institution"
+                    name="institution"
+                    label="Institution Name / संस्थान का नाम"
+                    required
+                    value={formData.institution}
+                    onChange={handleChange}
+                  />
+                  <FormSelect
+                    id="qualification"
+                    name="qualification"
+                    label="Educational Qualification / शैक्षिक योग्यता"
+                    placeholder="--Select Qualification--"
+                    options={["B.Tech", "M.Tech", "BCA", "MCA", "B.Sc", "Other"]}
+                    required
+                    value={formData.qualification}
+                    onChange={handleChange}
+                  />
+                </CardSection>
+
+                // Section 6
+                <CardSection title="6. IDENTIFICATION DETAILS / पहचान का विवरण">
+                  <label className="block text-zinc-100 text-[13px] font-semibold mb-3">
+                    Upload Passport Size Photo / पासपोर्ट साइज फोटो अपलोड करें
+                    <span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <input
+                    key={photoInputKey}
+                    id="passport_photo"
+                    type="file"
+                    name="passport_photo"
+                    className="sr-only"
+                    accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+                    onChange={handlePhotoChange}
+                  />
+                  <label
+                    htmlFor="passport_photo"
+                    className="w-full border border-dashed border-[#3a402a] rounded-xl py-14 flex flex-col items-center justify-center bg-[#111111]/50 hover:bg-[#161616] transition-colors cursor-pointer group"
+                  >
+                    <Upload className="w-6 h-6 text-zinc-400 mb-3 group-hover:text-zinc-200 transition-colors" />
+                    <p className="text-zinc-400 text-[13px] group-hover:text-zinc-300 transition-colors">
+                      Click to upload photo (Max 800KB to 1MB)
+                    </p>
+                    <p className="mt-1 text-[11px] text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                      Supported: JPG, PNG, WEBP, HEIC, HEIF
+                    </p>
+                    {passportPhotoName && (
+                      <p className="mt-2 text-xs text-[#d4ff33]">Selected: {passportPhotoName}</p>
+                    )}
+                  </label>
+                </CardSection>
+
+                // Declaration Section
+                <div className="bg-[#181818] rounded-xl border border-[#2a301a] p-6 mb-12">
+                  <label className="flex items-start gap-4 cursor-pointer group">
+                    <div className="pt-1 relative flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        name="declaration"
+                        required
+                        checked={formData.declaration}
+                        onChange={handleChange}
+                        className="peer w-5 h-5 rounded-sm bg-white border-none appearance-none checked:bg-orange-500 cursor-pointer flex-shrink-0 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-[#181818]"
+                      />
+
+                      // The Checkmark Arrow
+                      <svg
+                        className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="4"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+
+                    <p className="text-[13px] text-zinc-300 leading-relaxed text-justify group-hover:text-zinc-100 transition-colors">
+                      I hereby declare that the information given above and in the
+                      enclosed documents is true to the best of my knowledge and
+                      belief and nothing has been concealed therein. I understand that
+                      if the information given by me is proved false/not true, all the
+                      benefits availed by me shall be withdrawn. / मैं घोषणा करता हूँ
+                      कि ऊपर और संलग्न दस्तावेजों में दी गई जानकारी मेरी सर्वोत्तम
+                      जानकारी और विश्वास के अनुसार सत्य है और इसमें कुछ भी छिपाया नहीं
+                      गया है। मैं समझता हूँ कि यदि मेरे द्वारा दी गई जानकारी झूठी हुई
+                      तो मेरे द्वारा प्राप्त किए गए सभी लाभ वापस ले लिए जाएंगे।
+                    </p>
+                  </label>
+                </div>
+
+                // Submit Button
+                <div className="border-t border-[#262626] pt-8 flex justify-center">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={`text-black font-semibold text-sm px-8 py-3.5 rounded-full flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-[#d4ff33]/10 ${isSubmitting
+                        ? "bg-zinc-700 text-zinc-300 cursor-not-allowed"
+                        : "bg-orange-500 hover:bg-orange-600"
+                      }`}
+                  >
+                    {isSubmitting ? "Processing..." : "Proceed to Pay"}
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </form>
+            */}
+          </>
+        )}
       </main>
     </div>
   );
