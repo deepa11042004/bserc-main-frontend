@@ -24,6 +24,9 @@ import {
   Activity,
   Newspaper,
   Megaphone,
+  Award,
+  FileImage,
+  FolderKanban,
 } from "lucide-react"
 
 import Link from "next/link"
@@ -296,6 +299,38 @@ export default function Sidebar() {
                     isActive={normalizedPath === "/admin/email/senders"}
                   >
                     Sender Identities
+                  </NavItem>
+                </div>
+              </div>
+
+              <div>
+                <div className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Certificates
+                </div>
+                <div className="space-y-1">
+                  <NavItem
+                    href="/admin/certificates"
+                    icon={Award}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath === "/admin/certificates"}
+                  >
+                    Certificate Dashboard
+                  </NavItem>
+                  <NavItem
+                    href="/admin/certificates/templates/new"
+                    icon={FileImage}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath.startsWith("/admin/certificates/templates")}
+                  >
+                    Templates
+                  </NavItem>
+                  <NavItem
+                    href="/admin/certificates/batches/new"
+                    icon={FolderKanban}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath.startsWith("/admin/certificates/batches")}
+                  >
+                    Batches
                   </NavItem>
                 </div>
               </div>

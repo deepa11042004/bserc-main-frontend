@@ -19,6 +19,12 @@ const STATUS_STYLES: Record<string, string> = {
   // template
   ACTIVE: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
   DISABLED: "bg-zinc-500/15 text-zinc-300 ring-zinc-500/30",
+  // certificate batches
+  READY: "bg-sky-500/15 text-sky-300 ring-sky-500/30",
+  RENDERING: "bg-blue-500/15 text-blue-300 ring-blue-500/30",
+  RENDERED: "bg-violet-500/15 text-violet-300 ring-violet-500/30",
+  DISTRIBUTING: "bg-blue-500/15 text-blue-300 ring-blue-500/30",
+  DOWNLOADED: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
   // queue health
   healthy: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
   warning: "bg-amber-500/15 text-amber-300 ring-amber-500/30",

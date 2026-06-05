@@ -9,13 +9,23 @@ import type {
   CampaignQueryInput,
   CampaignRecipient,
   CampaignStats,
+  CertBatch,
+  CertColumnsResponse,
+  CertDistributeInput,
+  CertDistributeResponse,
+  CertPlaceholder,
+  CertPreviewResponse,
+  CertRecipient,
+  CertTemplate,
   DashboardSummary,
   EmailLoginResponse,
   FailedEmailsResponse,
+  PlaceholderInput,
   QueueHealth,
   RecipientStatus,
   SenderIdentity,
   SenderInput,
+  SerialConfig,
   SuppressionEntry,
   Template,
   TemplateAttachment,
@@ -268,6 +278,123 @@ export const emailApi = {
   deleteAttachment(templateId: number, attachmentId: number) {
     return request<void>(`/templates/${templateId}/attachments/${attachmentId}`, {
       method: "DELETE",
+    });
+  },
+
+  // --- certificate templates ---
+  listCertTemplates(params: { status?: string; limit?: number } = {}) {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    if (params.limit !== undefined) q.set("limit", String(params.limit));
+    const qs = q.toString();
+    return request<CertTemplate[]>(`/cert-templates${qs ? `?${qs}` : ""}`);
+  },
+  getCertTemplate(id: number) {
+    return request<CertTemplate>(`/cert-templates/${id}`);
+  },
+  createCertTemplate(input: {
+    name: string;
+    description?: string | null;
+    image: { filename: string; contentType: string; data: string };
+  }) {
+    return request<CertTemplate>("/cert-templates", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+  updateCertTemplate(
+    id: number,
+    input: { name?: string; description?: string | null; status?: "ACTIVE" | "DISABLED" }
+  ) {
+    return request<CertTemplate>(`/cert-templates/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+    });
+  },
+  deleteCertTemplate(id: number) {
+    return request<void>(`/cert-templates/${id}`, { method: "DELETE" });
+  },
+  replaceCertPlaceholders(id: number, placeholders: PlaceholderInput[]) {
+    return request<CertPlaceholder[]>(`/cert-templates/${id}/placeholders`, {
+      method: "PUT",
+      body: JSON.stringify({ placeholders }),
+    });
+  },
+
+  // --- certificate batches ---
+  listCertBatches(params: { status?: string; templateId?: number; limit?: number } = {}) {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    if (params.templateId !== undefined) q.set("templateId", String(params.templateId));
+    if (params.limit !== undefined) q.set("limit", String(params.limit));
+    const qs = q.toString();
+    return request<CertBatch[]>(`/cert-batches${qs ? `?${qs}` : ""}`);
+  },
+  getCertBatch(id: number) {
+    return request<CertBatch>(`/cert-batches/${id}`);
+  },
+  createCertBatch(input: {
+    name: string;
+    templateId: number;
+    file: { filename: string; contentType: string; data: string };
+  }) {
+    return request<CertBatch>("/cert-batches", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+  getCertBatchColumns(id: number) {
+    return request<CertColumnsResponse>(`/cert-batches/${id}/columns`);
+  },
+  saveCertBatchMapping(
+    id: number,
+    input: {
+      columnMapping: Record<string, string>;
+      emailColumn?: string | null;
+      nameColumn?: string | null;
+      serialConfig?: SerialConfig;
+    }
+  ) {
+    return request<CertBatch>(`/cert-batches/${id}/mapping`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+    });
+  },
+  previewCertBatch(id: number, row = 0) {
+    return request<CertPreviewResponse>(`/cert-batches/${id}/preview?row=${row}`);
+  },
+  startCertBatch(id: number) {
+    return request<CertBatch>(`/cert-batches/${id}/start`, { method: "POST" });
+  },
+  cancelCertBatch(id: number) {
+    return request<CertBatch>(`/cert-batches/${id}/cancel`, { method: "POST" });
+  },
+  deleteCertBatch(id: number) {
+    return request<void>(`/cert-batches/${id}`, { method: "DELETE" });
+  },
+  listCertRecipients(
+    batchId: number,
+    params: { status?: string; limit?: number; offset?: number } = {}
+  ) {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    if (params.limit !== undefined) q.set("limit", String(params.limit));
+    if (params.offset !== undefined) q.set("offset", String(params.offset));
+    const qs = q.toString();
+    return request<CertRecipient[]>(
+      `/cert-batches/${batchId}/recipients${qs ? `?${qs}` : ""}`
+    );
+  },
+  retryCertRecipient(batchId: number, recipientId: number) {
+    return request<{ status: string }>(
+      `/cert-batches/${batchId}/recipients/${recipientId}/retry`,
+      { method: "POST" }
+    );
+  },
+  distributeCertBatch(batchId: number, input: CertDistributeInput) {
+    return request<CertDistributeResponse>(`/cert-batches/${batchId}/distribute`, {
+      method: "POST",
+      body: JSON.stringify(input),
     });
   },
 };
