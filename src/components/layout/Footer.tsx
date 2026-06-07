@@ -8,7 +8,7 @@ import {
   FaTwitter,
   FaLinkedinIn,
 } from "react-icons/fa";
-import { FiMail } from "react-icons/fi";
+import { FiMail, FiMapPin } from "react-icons/fi";
 import { IconType } from "react-icons";
 import Image from "next/image";
 import Link from "next/link";
@@ -195,8 +195,8 @@ const Footer = () => {
     <footer className="bg-black text-white border-t border-white/10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
         {/* Four Column Grid - Responsive */}
-        {/* col from 4 to 3 */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+        {/* col from 3 to 4 */}
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
 
           {/* Column 1: Brand + Social */}
           <div className="space-y-4 text-center md:text-left">
@@ -292,6 +292,27 @@ const Footer = () => {
                 );
               })}
             </ul>
+          </div>
+
+          {/* Column: Regional Office */}
+          <div className="text-center md:text-left">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-4">
+              Regional Office
+            </h4>
+            <div className="w-full">
+              <div className="flex items-start justify-center md:justify-start gap-2">
+                <span className="flex h-7 w-7 mt-0.5 items-center justify-center rounded-md bg-[#0b1224] text-[#3B82F6] flex-shrink-0">
+                  <FiMapPin size={12} />
+                </span>
+                <div className="text-xs sm:text-sm text-slate-300 leading-relaxed text-justify">
+                  <p>C-32, 2nd Floor,</p>
+                  <p>Ram Nagar, Sector - 14,</p>
+                  <p>Kaushambi, Ghaziabad,</p>
+                  <p>Delhi NCR, Uttar Pradesh - 201010</p>
+                  <p className="mt-1 font-medium">INDIA</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Column 3: News and Updates */}
