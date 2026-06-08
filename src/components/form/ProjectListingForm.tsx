@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent, ChangeEvent } from "react";
+import { submitProjectListing } from "@/services/projectListing";
 import {
   Check,
   ArrowRight,
@@ -992,18 +993,11 @@ export default function ProjectListingForm() {
         formDataObj.append("supportingDocument", formData.supportingFile);
       formDataObj.append("submissionType", "project_listing");
       formDataObj.append("timestamp", new Date().toISOString());
-      const response = await fetch("/api/project-listing", {
-        method: "POST",
-        body: formDataObj,
-      });
-      const payload = (await response.json().catch(() => ({}))) as unknown;
-      if (!response.ok)
-        throw new Error(
-          getApiMessage(payload) || "Unable to submit project listing.",
-        );
+      const result = await submitProjectListing(formDataObj);
       setSubmitStatus("success");
       setSubmitMessage(
-        "Project submitted successfully! Review within 5-7 business days.",
+        result.message ||
+          "Project submitted successfully! Review within 5-7 business days.",
       );
       setFormData(createInitialFormData());
       setFileName("");
