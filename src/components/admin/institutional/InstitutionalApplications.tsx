@@ -4,14 +4,20 @@ import { useEffect, useMemo, useState } from "react";
 import { Download, Eye, Loader2, NotebookPen, Trash2, X } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+const agTheme = themeQuartz.withParams({
+  backgroundColor: "#18181b",
+  foregroundColor: "#e4e4e7",
+  headerBackgroundColor: "#18181b",
+  rowHoverColor: "#27272a",
+  borderColor: "#27272a",
+  headerTextColor: "#ffffff",
+});
 
 type InstitutionalApplication = {
   id: number;
@@ -389,6 +395,129 @@ export default function InstitutionalApplications() {
     }
   };
 
+  const colDefs = useMemo<ColDef<InstitutionalApplication>[]>(() => [
+    {
+      headerName: "Institute",
+      field: "institute_name",
+      flex: 1.5,
+      minWidth: 280,
+      cellRenderer: (params: any) => {
+        const app = params.data;
+        if (!app) return null;
+        return (
+          <div className="flex flex-col text-zinc-300 text-sm h-full justify-center leading-tight py-2">
+            <span
+              className="max-w-[260px] truncate text-zinc-100 font-medium"
+              title={app.institute_name || "-"}
+            >
+              {app.institute_name || "-"}
+            </span>
+            <span className="mt-0.5">{app.board || "-"}</span>
+            <span className="text-zinc-500 mt-0.5">
+              {app.city || "-"}, {app.state || "-"}
+            </span>
+            <span className="text-zinc-500 mt-0.5">
+              PIN: {app.pin_code || "-"}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      headerName: "Primary Contact",
+      field: "contact_name",
+      flex: 1,
+      minWidth: 260,
+      cellRenderer: (params: any) => {
+        const app = params.data;
+        if (!app) return null;
+        return (
+          <div className="flex flex-col text-zinc-300 text-sm h-full justify-center leading-tight py-2">
+            <span className="text-zinc-100 font-medium">{app.contact_name || "-"}</span>
+            <span className="mt-0.5">{app.designation || "-"}</span>
+            <span className="text-zinc-500 mt-0.5">{app.email || "-"}</span>
+            <span className="text-zinc-500 mt-0.5">{app.phone || "-"}</span>
+          </div>
+        );
+      }
+    },
+    {
+      headerName: "Institution Head",
+      field: "head_name",
+      flex: 1,
+      minWidth: 260,
+      cellRenderer: (params: any) => {
+        const app = params.data;
+        if (!app) return null;
+        return (
+          <div className="flex flex-col text-zinc-300 text-sm h-full justify-center leading-tight py-2">
+            <span className="text-zinc-100 font-medium">{app.head_name || "-"}</span>
+            <span className="text-zinc-500 mt-0.5">{app.head_email || "-"}</span>
+            <span className="text-zinc-500 mt-0.5">{app.head_phone || "-"}</span>
+          </div>
+        );
+      }
+    },
+    {
+      headerName: "Students",
+      field: "student_count",
+      width: 130,
+      valueFormatter: (params: any) => params.value || "-"
+    },
+    {
+      headerName: "Submitted & Actions",
+      width: 250,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: any) => {
+        const app = params.data;
+        if (!app) return null;
+        return (
+          <div className="flex flex-col justify-center h-full py-2 gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleViewApplication(app)}
+                className="rounded-md bg-cyan-500 px-2 py-1 text-xs font-semibold uppercase text-black transition hover:bg-cyan-400"
+              >
+                <span className="inline-flex items-center gap-1">
+                  <Eye className="h-3.5 w-3.5" />
+                  View
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteApplication(app)}
+                disabled={deletingApplicationId === app.id}
+                className="rounded-md bg-rose-500 px-2 py-1 text-xs font-semibold uppercase text-black transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletingApplicationId === app.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <span className="inline-flex items-center gap-1">
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete
+                  </span>
+                )}
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-zinc-500 text-xs">
+              <span>{formatDate(app.created_at)}</span>
+              <span>|</span>
+              <span>{formatTime(app.created_at)}</span>
+            </div>
+          </div>
+        );
+      }
+    }
+  ], [deletingApplicationId]);
+
+  const defaultColDef = useMemo<ColDef>(() => ({
+    sortable: true,
+    filter: true,
+    resizable: true,
+  }), []);
+
   return (
     <div className="min-h-screen container mx-auto max-w-8xl text-zinc-100">
       <div className="flex flex-col gap-4 pt-3 pb-5 mb-6 border-b border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
@@ -435,106 +564,20 @@ export default function InstitutionalApplications() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="w-full overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-zinc-800">
-                    <TableHead className="text-white min-w-[280px]">Institute</TableHead>
-                    <TableHead className="text-white min-w-[260px]">Primary Contact</TableHead>
-                    <TableHead className="text-white min-w-[260px]">Institution Head</TableHead>
-                    <TableHead className="text-white min-w-[170px]">Students</TableHead>
-                    <TableHead className="text-white min-w-[160px]">Submitted</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {applications.length === 0 ? (
-                    <TableRow className="border-zinc-800">
-                      <TableCell colSpan={5} className="text-center text-zinc-400 py-8">
-                        No institutional applications found.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    applications.map((application) => (
-                      <TableRow
-                        key={`${application.id}-${application.email}`}
-                        className="border-zinc-800"
-                      >
-                        <TableCell className="align-top">
-                          <div className="flex flex-col text-zinc-300 text-sm">
-                            <span
-                              className="max-w-[260px] truncate text-zinc-100 font-medium"
-                              title={application.institute_name || "-"}
-                            >
-                              {application.institute_name || "-"}
-                            </span>
-                            <span>{application.board || "-"}</span>
-                            <span className="text-zinc-500">
-                              {application.city || "-"}, {application.state || "-"}
-                            </span>
-                            <span className="text-zinc-500">
-                              PIN: {application.pin_code || "-"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <div className="flex flex-col text-zinc-300 text-sm">
-                            <span className="text-zinc-100 font-medium">{application.contact_name || "-"}</span>
-                            <span>{application.designation || "-"}</span>
-                            <span className="text-zinc-500">{application.email || "-"}</span>
-                            <span className="text-zinc-500">{application.phone || "-"}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <div className="flex flex-col text-zinc-300 text-sm">
-                            <span className="text-zinc-100 font-medium">{application.head_name || "-"}</span>
-                            <span className="text-zinc-500">{application.head_email || "-"}</span>
-                            <span className="text-zinc-500">{application.head_phone || "-"}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="align-top text-zinc-300 text-sm">
-                          {application.student_count || "-"}
-                        </TableCell>
-                        <TableCell className="text-zinc-400 align-top">
-                          <div className="flex flex-col gap-3 text-sm">
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleViewApplication(application)}
-                                className="rounded-md bg-cyan-500 px-2 py-1 text-xs font-semibold uppercase text-black transition hover:bg-cyan-400"
-                              >
-                                <span className="inline-flex items-center gap-1">
-                                  <Eye className="h-3.5 w-3.5" />
-                                  View
-                                </span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteApplication(application)}
-                                disabled={deletingApplicationId === application.id}
-                                className="rounded-md bg-rose-500 px-2 py-1 text-xs font-semibold uppercase text-black transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                {deletingApplicationId === application.id ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <span className="inline-flex items-center gap-1">
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                    Delete
-                                  </span>
-                                )}
-                              </button>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 text-zinc-500">
-                              <span>{formatDate(application.created_at)}</span>
-                              <span>|</span>
-                              <span>{formatTime(application.created_at)}</span>
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+            <div className="h-[600px] w-full">
+              <AgGridReact
+                theme={agTheme}
+                rowData={applications}
+                columnDefs={colDefs}
+                defaultColDef={defaultColDef}
+                rowHeight={104}
+                headerHeight={48}
+                suppressCellFocus={true}
+                overlayNoRowsTemplate='<span class="text-zinc-400">No institutional applications found.</span>'
+                pagination={true}
+                paginationPageSize={10}
+                paginationPageSizeSelector={[10, 20, 50, 100]}
+              />
             </div>
           )}
         </CardContent>

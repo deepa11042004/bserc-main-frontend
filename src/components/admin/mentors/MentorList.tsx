@@ -7,14 +7,20 @@ import { Download, Eye, Loader2, Trash2, UsersRound } from "lucide-react";
 import { AdminToast } from "@/components/admin/AdminToast";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+const agTheme = themeQuartz.withParams({
+  backgroundColor: "#18181b",
+  foregroundColor: "#e4e4e7",
+  headerBackgroundColor: "#18181b",
+  rowHoverColor: "#27272a",
+  borderColor: "#27272a",
+  headerTextColor: "#ffffff",
+});
 import type { MentorProfile } from "@/types/mentor";
 import {
   extractMentors,
@@ -152,6 +158,137 @@ export default function MentorList() {
   const totalMentors = useMemo(() => mentors.length, [mentors]);
 
   const isMovingMentor = (mentorId: number) => movingMentorIds.includes(mentorId);
+
+  const colDefs = useMemo<ColDef<MentorProfile>[]>(() => [
+    {
+      headerName: "Mentor",
+      field: "full_name",
+      flex: 1.5,
+      minWidth: 250,
+      cellRenderer: (params: any) => {
+        const mentor = params.data;
+        if (!mentor) return null;
+        return (
+          <div className="flex items-center gap-3 h-full">
+            {mentor.has_profile_photo ? (
+              <img
+                src={`/api/mentor/${mentor.id}/profile-photo`}
+                alt={`${mentor.full_name} profile photo`}
+                className="h-10 w-10 rounded-full border border-zinc-700 object-cover bg-zinc-800"
+                loading="lazy"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full border border-zinc-700 bg-zinc-800 flex items-center justify-center text-zinc-300 text-sm font-semibold">
+                {mentor.full_name.trim().charAt(0).toUpperCase() || "M"}
+              </div>
+            )}
+            <div className="flex flex-col justify-center">
+              <span className="text-zinc-100 font-medium">{mentor.full_name}</span>
+              <span className="text-zinc-400 text-xs">{mentor.phone || "-"}</span>
+              <span className="text-zinc-400 text-xs">{mentor.email}</span>
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      headerName: "Organization",
+      field: "organization",
+      flex: 1,
+      minWidth: 200,
+      cellRenderer: (params: any) => {
+        const mentor = params.data;
+        if (!mentor) return null;
+        return (
+          <div className="flex flex-col text-zinc-300 text-sm h-full justify-center">
+            <span>{mentor.organization || "-"}</span>
+            <span className="text-zinc-500">{mentor.current_position || "-"}</span>
+          </div>
+        );
+      }
+    },
+    {
+      headerName: "Track",
+      field: "primary_track",
+      flex: 1,
+      minWidth: 200,
+      cellRenderer: (params: any) => {
+        const mentor = params.data;
+        if (!mentor) return null;
+        return (
+          <div className="flex flex-col text-zinc-300 text-sm h-full justify-center">
+            <span>{mentor.primary_track || "-"}</span>
+            <span className="text-zinc-500">{mentor.availability || "-"}</span>
+          </div>
+        );
+      }
+    },
+    {
+      headerName: "Experience",
+      field: "years_experience",
+      width: 130,
+      valueFormatter: (params: any) => 
+        params.value === null ? "-" : `${params.value} years`
+    },
+    {
+      headerName: "Registered",
+      field: "created_at",
+      width: 150,
+      valueFormatter: (params: any) => formatMentorDate(params.value)
+    },
+    {
+      headerName: "Actions",
+      width: 200,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: any) => {
+        const mentor = params.data;
+        if (!mentor) return null;
+        return (
+          <div className="flex items-center justify-end gap-2 h-full">
+            <Link href={`/admin/mentors/${mentor.id}`}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="border border-blue-700 bg-transparent text-blue-300 hover:bg-blue-950/50 hover:text-blue-200 h-8"
+              >
+                <Eye className="mr-1.5 h-3.5 w-3.5" />
+                View
+              </Button>
+            </Link>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={isMovingMentor(mentor.id)}
+              onClick={() => void handleMoveToPending(mentor.id)}
+              className="border border-rose-700 bg-transparent text-rose-300 hover:bg-rose-950/50 hover:text-rose-200 h-8"
+            >
+              {isMovingMentor(mentor.id) ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  Moving...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </div>
+        );
+      }
+    }
+  ], [movingMentorIds]);
+
+  const defaultColDef = useMemo<ColDef>(() => ({
+    sortable: true,
+    filter: true,
+    resizable: true,
+  }), []);
 
   const handleMoveToPending = async (mentorId: number) => {
     setMovingMentorIds((prev) =>
@@ -308,109 +445,21 @@ export default function MentorList() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-zinc-800">
-                  <TableHead className="text-white">Mentor</TableHead>
-                  <TableHead className="text-white">Organization</TableHead>
-                  <TableHead className="text-white">Track</TableHead>
-                  <TableHead className="text-white">Experience</TableHead>
-                  <TableHead className="text-white">Registered</TableHead>
-                  <TableHead className="text-white text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mentors.length === 0 ? (
-                  <TableRow className="border-zinc-800">
-                    <TableCell colSpan={6} className="py-8 text-center text-zinc-500">
-                      No active mentors found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  mentors.map((mentor) => (
-                    <TableRow key={mentor.id} className="border-zinc-800 align-top">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {mentor.has_profile_photo ? (
-                            <img
-                              src={`/api/mentor/${mentor.id}/profile-photo`}
-                              alt={`${mentor.full_name} profile photo`}
-                              className="h-10 w-10 rounded-full border border-zinc-700 object-cover bg-zinc-800"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full border border-zinc-700 bg-zinc-800 flex items-center justify-center text-zinc-300 text-sm font-semibold">
-                              {mentor.full_name.trim().charAt(0).toUpperCase() || "M"}
-                            </div>
-                          )}
-                          <div className="flex flex-col">
-                            <span className="text-zinc-100 font-medium">{mentor.full_name}</span>
-                            <span className="text-zinc-400 text-xs">{mentor.phone || "-"}</span>
-                            <span className="text-zinc-400 text-xs">{mentor.email}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col text-zinc-300 text-sm">
-                          <span>{mentor.organization || "-"}</span>
-                          <span className="text-zinc-500">{mentor.current_position || "-"}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col text-zinc-300 text-sm">
-                          <span>{mentor.primary_track || "-"}</span>
-                          <span className="text-zinc-500">{mentor.availability || "-"}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-zinc-300">
-                        {mentor.years_experience === null
-                          ? "-"
-                          : `${mentor.years_experience} years`}
-                      </TableCell>
-                      <TableCell className="text-zinc-300">
-                        {formatMentorDate(mentor.created_at)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link href={`/admin/mentors/${mentor.id}`}>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="border border-blue-700 bg-transparent text-blue-300 hover:bg-blue-950/50 hover:text-blue-200"
-                            >
-                              <Eye className="mr-1.5 h-3.5 w-3.5" />
-                              View
-                            </Button>
-                          </Link>
-
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            disabled={isMovingMentor(mentor.id)}
-                            onClick={() => void handleMoveToPending(mentor.id)}
-                            className="border border-rose-700 bg-transparent text-rose-300 hover:bg-rose-950/50 hover:text-rose-200"
-                          >
-                            {isMovingMentor(mentor.id) ? (
-                              <>
-                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                                Moving...
-                              </>
-                            ) : (
-                              <>
-                                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                                Delete
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            <div className="h-[600px] w-full">
+              <AgGridReact
+                theme={agTheme}
+                rowData={mentors}
+                columnDefs={colDefs}
+                defaultColDef={defaultColDef}
+                rowHeight={72}
+                headerHeight={48}
+                suppressCellFocus={true}
+                overlayNoRowsTemplate='<span class="text-zinc-500">No active mentors found.</span>'
+                pagination={true}
+                paginationPageSize={10}
+                paginationPageSizeSelector={[10, 20, 50, 100]}
+              />
+            </div>
           )}
         </CardContent>
       </Card>
