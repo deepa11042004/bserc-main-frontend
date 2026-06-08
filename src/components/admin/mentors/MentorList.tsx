@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Download, Eye, Loader2, Trash2, UsersRound } from "lucide-react";
 
 import { AdminToast } from "@/components/admin/AdminToast";
@@ -97,12 +97,14 @@ function buildDynamicExportRows(records: Record<string, unknown>[]) {
 export default function MentorList() {
   const [mentors, setMentors] = useState<MentorProfile[]>([]);
   const [mentorRecords, setMentorRecords] = useState<Record<string, unknown>[]>([]);
+  const gridRef = useRef<AgGridReact>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [movingMentorIds, setMovingMentorIds] = useState<number[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVariant, setToastVariant] = useState<ToastVariant>("info");
   const [error, setError] = useState("");
+  const [quickFilterText, setQuickFilterText] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -163,6 +165,7 @@ export default function MentorList() {
     {
       headerName: "Mentor",
       field: "full_name",
+      filterValueGetter: (p: any) => p.data ? `${p.data.full_name} ${p.data.email} ${p.data.phone || ""}` : "",
       flex: 1.5,
       minWidth: 250,
       cellRenderer: (params: any) => {
@@ -194,6 +197,7 @@ export default function MentorList() {
     {
       headerName: "Organization",
       field: "organization",
+      filterValueGetter: (p: any) => p.data ? `${p.data.organization || ""} ${p.data.current_position || ""}` : "",
       flex: 1,
       minWidth: 200,
       cellRenderer: (params: any) => {
@@ -210,6 +214,7 @@ export default function MentorList() {
     {
       headerName: "Track",
       field: "primary_track",
+      filterValueGetter: (p: any) => p.data ? `${p.data.primary_track || ""} ${p.data.availability || ""}` : "",
       flex: 1,
       minWidth: 200,
       cellRenderer: (params: any) => {
@@ -226,6 +231,7 @@ export default function MentorList() {
     {
       headerName: "Experience",
       field: "years_experience",
+      filter: 'agNumberColumnFilter',
       width: 130,
       valueFormatter: (params: any) => 
         params.value === null ? "-" : `${params.value} years`
@@ -233,6 +239,18 @@ export default function MentorList() {
     {
       headerName: "Registered",
       field: "created_at",
+      filter: 'agDateColumnFilter',
+      filterParams: {
+        comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
+          if (!cellValue) return -1;
+          const cellDate = new Date(cellValue);
+          cellDate.setHours(0, 0, 0, 0);
+          if (cellDate.getTime() === filterLocalDateAtMidnight.getTime()) return 0;
+          if (cellDate < filterLocalDateAtMidnight) return -1;
+          if (cellDate > filterLocalDateAtMidnight) return 1;
+          return 0;
+        }
+      },
       width: 150,
       valueFormatter: (params: any) => formatMentorDate(params.value)
     },
@@ -241,6 +259,7 @@ export default function MentorList() {
       width: 200,
       sortable: false,
       filter: false,
+      pinned: "right",
       cellRenderer: (params: any) => {
         const mentor = params.data;
         if (!mentor) return null;
@@ -330,8 +349,18 @@ export default function MentorList() {
       return;
     }
 
-    if (mentorRecords.length === 0) {
-      setError("No mentors available to export.");
+    let recordsToExport = mentorRecords;
+
+    if (gridRef.current && gridRef.current.api) {
+      const selectedNodes = gridRef.current.api.getSelectedNodes();
+      if (selectedNodes.length > 0) {
+        const selectedIds = new Set(selectedNodes.map(node => node.data.id));
+        recordsToExport = mentorRecords.filter(record => selectedIds.has(Number(record.id)));
+      }
+    }
+
+    if (recordsToExport.length === 0) {
+      setError("No mentors selected or available to export.");
       return;
     }
 
@@ -341,10 +370,10 @@ export default function MentorList() {
     try {
       const XLSX = await import("xlsx");
 
-      const { headers, rows } = buildDynamicExportRows(mentorRecords);
+      const { headers, rows } = buildDynamicExportRows(recordsToExport);
 
       if (rows.length === 0) {
-        setError("No mentors available to export.");
+        setError("No mentors selected or available to export.");
         return;
       }
 
@@ -404,12 +433,19 @@ export default function MentorList() {
 
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <CardTitle className="text-emerald-100 bg-emerald-950/70 border border-emerald-600 px-3 py-1 rounded-md text-lg flex items-center gap-2">
               <UsersRound className="h-4 w-4 text-emerald-300" />
               Active Mentors
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              <input
+                type="text"
+                placeholder="Search across all columns..."
+                value={quickFilterText}
+                onChange={(e) => setQuickFilterText(e.target.value)}
+                className="w-full sm:w-64 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
               <Button
                 variant="ghost"
                 size="sm"
@@ -447,6 +483,7 @@ export default function MentorList() {
           ) : (
             <div className="h-[600px] w-full">
               <AgGridReact
+                ref={gridRef}
                 theme={agTheme}
                 rowData={mentors}
                 columnDefs={colDefs}
@@ -454,6 +491,9 @@ export default function MentorList() {
                 rowHeight={72}
                 headerHeight={48}
                 suppressCellFocus={true}
+                enableCellTextSelection={true}
+                quickFilterText={quickFilterText}
+                rowSelection={{ mode: 'multiRow' }}
                 overlayNoRowsTemplate='<span class="text-zinc-500">No active mentors found.</span>'
                 pagination={true}
                 paginationPageSize={10}

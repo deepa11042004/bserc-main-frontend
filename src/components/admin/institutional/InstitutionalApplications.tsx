@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Download, Eye, Loader2, NotebookPen, Trash2, X } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -206,10 +206,12 @@ function extractApplications(payload: unknown): InstitutionalApplication[] {
 
 export default function InstitutionalApplications() {
   const [applications, setApplications] = useState<InstitutionalApplication[]>([]);
+  const gridRef = useRef<AgGridReact>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedApplication, setSelectedApplication] = useState<InstitutionalApplication | null>(null);
   const [deletingApplicationId, setDeletingApplicationId] = useState<number | null>(null);
+  const [quickFilterText, setQuickFilterText] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -266,7 +268,16 @@ export default function InstitutionalApplications() {
   const totalApplications = useMemo(() => applications.length, [applications]);
 
   const handleExportApplications = () => {
-    if (!applications.length) {
+    let dataToExport = applications;
+
+    if (gridRef.current && gridRef.current.api) {
+      const selectedNodes = gridRef.current.api.getSelectedNodes();
+      if (selectedNodes.length > 0) {
+        dataToExport = selectedNodes.map(node => node.data);
+      }
+    }
+
+    if (!dataToExport.length) {
       return;
     }
 
@@ -296,7 +307,7 @@ export default function InstitutionalApplications() {
       "updated_at",
     ];
 
-    const rows = applications.map((application) => [
+    const rows = dataToExport.map((application) => [
       application.id,
       application.institute_name,
       application.board,
@@ -399,6 +410,7 @@ export default function InstitutionalApplications() {
     {
       headerName: "Institute",
       field: "institute_name",
+      filterValueGetter: (p: any) => p.data ? `${p.data.institute_name || ""} ${p.data.board || ""} ${p.data.city || ""} ${p.data.state || ""} ${p.data.pin_code || ""}` : "",
       flex: 1.5,
       minWidth: 280,
       cellRenderer: (params: any) => {
@@ -426,6 +438,7 @@ export default function InstitutionalApplications() {
     {
       headerName: "Primary Contact",
       field: "contact_name",
+      filterValueGetter: (p: any) => p.data ? `${p.data.contact_name || ""} ${p.data.designation || ""} ${p.data.email || ""} ${p.data.phone || ""}` : "",
       flex: 1,
       minWidth: 260,
       cellRenderer: (params: any) => {
@@ -444,6 +457,7 @@ export default function InstitutionalApplications() {
     {
       headerName: "Institution Head",
       field: "head_name",
+      filterValueGetter: (p: any) => p.data ? `${p.data.head_name || ""} ${p.data.head_email || ""} ${p.data.head_phone || ""}` : "",
       flex: 1,
       minWidth: 260,
       cellRenderer: (params: any) => {
@@ -461,14 +475,33 @@ export default function InstitutionalApplications() {
     {
       headerName: "Students",
       field: "student_count",
+      filter: 'agNumberColumnFilter',
       width: 130,
       valueFormatter: (params: any) => params.value || "-"
     },
     {
       headerName: "Submitted & Actions",
       width: 250,
-      sortable: false,
-      filter: false,
+      sortable: true,
+      comparator: (valueA: any, valueB: any, nodeA: any, nodeB: any) => {
+         const a = new Date(nodeA.data.created_at || 0).getTime();
+         const b = new Date(nodeB.data.created_at || 0).getTime();
+         return a - b;
+      },
+      filter: 'agDateColumnFilter',
+      filterValueGetter: (params: any) => params.data ? params.data.created_at : null,
+      filterParams: {
+        comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
+          if (!cellValue) return -1;
+          const cellDate = new Date(cellValue);
+          cellDate.setHours(0, 0, 0, 0);
+          if (cellDate.getTime() === filterLocalDateAtMidnight.getTime()) return 0;
+          if (cellDate < filterLocalDateAtMidnight) return -1;
+          if (cellDate > filterLocalDateAtMidnight) return 1;
+          return 0;
+        }
+      },
+      pinned: "right",
       cellRenderer: (params: any) => {
         const app = params.data;
         if (!app) return null;
@@ -533,12 +566,19 @@ export default function InstitutionalApplications() {
 
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <CardTitle className="text-zinc-100 text-lg flex items-center gap-2">
               <NotebookPen className="h-4 w-4 text-blue-400" />
               Application List
             </CardTitle>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <input
+                type="text"
+                placeholder="Search applications..."
+                value={quickFilterText}
+                onChange={(e) => setQuickFilterText(e.target.value)}
+                className="w-full sm:w-64 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              />
               <span className="text-sm text-zinc-400">Total: {totalApplications}</span>
               <button
                 type="button"
@@ -566,6 +606,7 @@ export default function InstitutionalApplications() {
           ) : (
             <div className="h-[600px] w-full">
               <AgGridReact
+                ref={gridRef}
                 theme={agTheme}
                 rowData={applications}
                 columnDefs={colDefs}
@@ -573,6 +614,9 @@ export default function InstitutionalApplications() {
                 rowHeight={104}
                 headerHeight={48}
                 suppressCellFocus={true}
+                enableCellTextSelection={true}
+                quickFilterText={quickFilterText}
+                rowSelection={{ mode: 'multiRow' }}
                 overlayNoRowsTemplate='<span class="text-zinc-400">No institutional applications found.</span>'
                 pagination={true}
                 paginationPageSize={10}
