@@ -53,10 +53,9 @@ function NavItem({
 }: NavItemProps) {
   const baseClasses = `
     flex items-center px-3 py-2 text-sm rounded-md transition-colors
-    ${
-      isActive
-        ? "bg-[#1F1F23] text-white font-medium"
-        : "text-gray-300 hover:text-white hover:bg-[#1F1F23]"
+    ${isActive
+      ? "bg-[#1F1F23] text-white font-medium"
+      : "text-gray-300 hover:text-white hover:bg-[#1F1F23]"
     }
   `
 
@@ -203,7 +202,7 @@ export default function Sidebar() {
                 <div className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Team Management
                 </div>
-                <div className="space-y-1">                  
+                <div className="space-y-1">
                   <NavItem
                     href="/admin/mentors"
                     icon={Shield}
@@ -235,6 +234,14 @@ export default function Sidebar() {
                     isActive={normalizedPath === "/admin/summer-school/registration"}
                   >
                     Summer School Student Registrations
+                  </NavItem>
+                  <NavItem
+                    href="/admin/project-listings"
+                    icon={FolderKanban}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isActive={normalizedPath.startsWith("/admin/project-listings")}
+                  >
+                    Internship Projects
                   </NavItem>
                   <NavItem
                     href="/admin/institutional-applications"
