@@ -138,7 +138,7 @@ export function UserDashboardShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 lg:py-8">
-      <div className="mx-auto max-w-7xl">
+      <div className="w-full">
         <div className="mb-4 flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3">
           <div>
             <p className="text-xs uppercase tracking-[0.12em] text-cyan-200">Learner Workspace</p>
