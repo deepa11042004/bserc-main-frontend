@@ -138,7 +138,7 @@ function useDebounce<T>(value: T, delay: number): T {
 const AnnouncementCard = memo(() => (
   <div className="bg-gray-900 rounded-lg p-8 border border-gray-600 mb-8 shadow-md">
     <h3 className="text-center mb-3 py-5 text-white text-2xl font-bold">
-      Result Declaration – Written Test (held on Summer 2026)
+      Result Declaration – Written Test (held on 06 June 2026)
     </h3>
     <p className="text-gray-400 text-center sm:text-left">
       The following candidates have been selected for the Def-Space Summer
@@ -177,7 +177,7 @@ const AnnouncementCard = memo(() => (
         Team – Bharat Space Education Research Centre
       </strong>
       <br />
-      Date: 2026
+      Date: 06 June 2026
     </p>
   </div>
 ));
