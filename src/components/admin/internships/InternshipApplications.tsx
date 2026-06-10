@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
 import {
   ArrowRightLeft,
   Download,
@@ -13,15 +16,18 @@ import {
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+const agTheme = themeQuartz.withParams({
+  backgroundColor: "#18181b",
+  foregroundColor: "#e4e4e7",
+  headerBackgroundColor: "#18181b",
+  rowHoverColor: "#27272a",
+  borderColor: "#27272a",
+  headerTextColor: "#ffffff",
+});
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { InternshipApplication } from "@/types/internshipApplication";
 import {
   extractInternshipApplications,
@@ -151,6 +157,7 @@ export default function InternshipApplications() {
   const [isTransferringPaymentStatus, setIsTransferringPaymentStatus] = useState(false);
   const [actionError, setActionError] = useState("");
   const [actionNotice, setActionNotice] = useState("");
+  const gridRef = useRef<AgGridReact>(null);
 
   const filteredApplications = applications;
 
@@ -574,6 +581,135 @@ export default function InternshipApplications() {
     }
   };
 
+  const colDefs = useMemo<ColDef<InternshipApplication>[]>(() => [
+    {
+      headerName: "Applicant",
+      field: "full_name",
+      flex: 1.5,
+      minWidth: 200,
+      filterValueGetter: (p: any) => p.data ? `${p.data.full_name} ${p.data.guardian_name} ${p.data.gender || ""} ${p.data.dob || ""}` : "",
+      cellRenderer: (params: any) => {
+        const a = params.data;
+        if (!a) return null;
+        return (
+          <div className="flex flex-col justify-center h-full">
+            <span className="text-zinc-100 font-medium text-sm">{a.full_name}</span>
+            <span className="text-zinc-400 text-xs">Guardian: {a.guardian_name}</span>
+            <span className="text-zinc-500 text-xs">{a.gender} • DOB: {formatDate(a.dob)}</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Contact",
+      field: "email",
+      flex: 1.5,
+      minWidth: 200,
+      filterValueGetter: (p: any) => p.data ? `${p.data.email} ${p.data.mobile_number} ${p.data.alternative_email || ""}` : "",
+      cellRenderer: (params: any) => {
+        const a = params.data;
+        if (!a) return null;
+        return (
+          <div className="flex flex-col justify-center h-full">
+            <span className="text-zinc-300 text-sm">{a.mobile_number}</span>
+            <span className="text-zinc-300 text-xs">{a.email}</span>
+            <span className="text-zinc-500 text-xs">Alt: {a.alternative_email || "-"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Institution",
+      field: "institution_name",
+      flex: 2,
+      minWidth: 200,
+      filterValueGetter: (p: any) => p.data ? `${p.data.institution_name || ""} ${p.data.educational_qualification || ""}` : "",
+      cellRenderer: (params: any) => {
+        const a = params.data;
+        if (!a) return null;
+        return (
+          <div className="flex flex-col justify-center h-full">
+            <span className="text-zinc-300 text-sm truncate" title={a.institution_name || undefined}>
+              {truncateDisplayValue(a.institution_name, INSTITUTION_NAME_MAX_DISPLAY_LENGTH)}
+            </span>
+            <span className="text-zinc-500 text-xs truncate" title={a.educational_qualification || undefined}>
+              {truncateDisplayValue(a.educational_qualification, QUALIFICATION_MAX_DISPLAY_LENGTH)}
+            </span>
+            <span className="text-zinc-500 text-xs">Declaration: {a.declaration_accepted ? "Accepted" : "No"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Payment",
+      field: "payment_status",
+      flex: 1.2,
+      minWidth: 160,
+      filterValueGetter: (p: any) => p.data ? `${p.data.payment_status || ""} ${p.data.razorpay_payment_id || ""}` : "",
+      cellRenderer: (params: any) => {
+        const a = params.data;
+        if (!a) return null;
+        return (
+          <div className="flex flex-col justify-center h-full gap-0.5">
+            <span className="text-zinc-300 text-sm">{formatMoney(a.payment_amount, a.payment_currency)}</span>
+            <span className={`inline-flex w-fit rounded border px-1.5 py-0.5 text-xs font-medium ${getPaymentBadgeClasses(a.payment_status)}`}>
+              {a.payment_status || "-"}
+            </span>
+            <span className="text-zinc-500 text-xs">ID: {a.razorpay_payment_id || "-"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Actions",
+      sortable: false,
+      filter: false,
+      pinned: "right",
+      width: 200,
+      cellRenderer: (params: any) => {
+        const a = params.data;
+        if (!a) return null;
+        return (
+          <div className="flex flex-col justify-center h-full gap-1">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => openApplicationModal("view", a)}
+                aria-label="View application"
+                title="View full application details"
+                className="rounded-md bg-cyan-500 p-1.5 text-black transition hover:bg-cyan-400"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => openApplicationModal("delete", a)}
+                aria-label="Delete application"
+                title="Delete this internship entry"
+                className="rounded-md bg-rose-500 p-1.5 text-black transition hover:bg-rose-400"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => openApplicationModal("transfer", a)}
+                aria-label="Transfer status"
+                title="Transfer payment status to failed/captured"
+                className="rounded-md bg-amber-500 p-1.5 text-black transition hover:bg-amber-400"
+              >
+                <ArrowRightLeft className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <span className="text-zinc-500 text-xs">{formatDateTime(a.created_at)}</span>
+            <span className="text-zinc-400 text-xs">{a.is_lateral ? "Lateral" : "Regular"}</span>
+          </div>
+        );
+      },
+    },
+  ], []);
+
+  const defaultColDef = useMemo<ColDef>(() => ({ sortable: true, filter: true, resizable: true }), []);
+
   return (
     <div className="min-h-screen container mx-auto max-w-8xl text-zinc-100">
       <div className="flex flex-col gap-4 pt-3 pb-5 mb-6 border-b border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
@@ -884,134 +1020,20 @@ export default function InternshipApplications() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="w-full overflow-x-auto">
-              <Table className="table-fixed">
-                <TableHeader>
-                  <TableRow className="border-zinc-800">
-                    <TableHead className="text-white w-[22%]">Applicant</TableHead>
-                    <TableHead className="text-white w-[24%]">Contact</TableHead>
-                    <TableHead className="text-white w-[22%]">Institution</TableHead>
-                    <TableHead className="text-white w-[16%]">Payment</TableHead>
-                    <TableHead className="text-white w-[16%]">Applied At / Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredApplications.length === 0 ? (
-                    <TableRow className="border-zinc-800">
-                      <TableCell colSpan={5} className="py-8 text-center text-zinc-500">
-                        {applications.length === 0
-                          ? "No internship applications found for the selected filters."
-                          : "No applications found for the selected filters."}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredApplications.map((application) => (
-                      <TableRow key={application.id} className="border-zinc-800 align-top">
-                        <TableCell>
-                          <div className="flex flex-col gap-1 text-sm">
-                            <span className="font-medium text-zinc-100">{application.full_name}</span>
-                            <span className="text-zinc-400">Guardian: {application.guardian_name}</span>
-                            <span className="text-zinc-500">
-                              {application.gender} • DOB: {formatDate(application.dob)}
-                            </span>
-                          </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="flex flex-col gap-1 text-sm text-zinc-300">
-                            <span>{application.mobile_number}</span>
-                            <span>{application.email}</span>
-                            <span className="text-zinc-500">
-                              Alt: {application.alternative_email || "-"}
-                            </span>
-                          </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="flex min-w-0 flex-col gap-1 text-sm text-zinc-300">
-                            <span
-                              className="block truncate"
-                              title={application.institution_name || undefined}
-                            >
-                              {truncateDisplayValue(
-                                application.institution_name,
-                                INSTITUTION_NAME_MAX_DISPLAY_LENGTH,
-                              )}
-                            </span>
-                            <span
-                              className="block truncate text-zinc-500"
-                              title={application.educational_qualification || undefined}
-                            >
-                              {truncateDisplayValue(
-                                application.educational_qualification,
-                                QUALIFICATION_MAX_DISPLAY_LENGTH,
-                              )}
-                            </span>
-                            <span className="text-zinc-500">
-                              Declaration: {application.declaration_accepted ? "Accepted" : "No"}
-                            </span>
-                          </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="flex flex-col gap-2 text-sm text-zinc-300">
-                            <span>
-                              {formatMoney(
-                                application.payment_amount,
-                                application.payment_currency,
-                              )}
-                            </span>
-                            <Badge className={getPaymentBadgeClasses(application.payment_status)}>
-                              {application.payment_status || "-"}
-                            </Badge>
-                            <span className="text-zinc-500 text-xs">
-                              ID: {application.razorpay_payment_id || "-"}
-                            </span>
-                          </div>
-                        </TableCell>
-
-                        <TableCell className="text-zinc-300 text-sm">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => openApplicationModal("view", application)}
-                                aria-label="View application"
-                                title="View full application details"
-                                className="rounded-md bg-cyan-500 p-1.5 text-black transition hover:bg-cyan-400"
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => openApplicationModal("delete", application)}
-                                aria-label="Delete application"
-                                title="Delete this internship entry"
-                                className="rounded-md bg-rose-500 p-1.5 text-black transition hover:bg-rose-400"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => openApplicationModal("transfer", application)}
-                                aria-label="Transfer status"
-                                title="Transfer payment status to failed/captured"
-                                className="rounded-md bg-amber-500 p-1.5 text-black transition hover:bg-amber-400"
-                              >
-                                <ArrowRightLeft className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                            <span className="text-zinc-500">{formatDateTime(application.created_at)}</span>
-                            <span className="text-xs text-zinc-400">
-                              {application.is_lateral ? "Lateral Registration" : "Regular Registration"}
-                            </span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+            <div className="h-[600px] w-full rounded-lg overflow-hidden border border-zinc-800">
+              <AgGridReact
+                ref={gridRef}
+                theme={agTheme}
+                rowData={filteredApplications}
+                columnDefs={colDefs}
+                defaultColDef={defaultColDef}
+                rowHeight={80}
+                headerHeight={48}
+                suppressCellFocus={true}
+                enableCellTextSelection={true}
+                rowSelection={{ mode: "multiRow" }}
+                overlayNoRowsTemplate='<span class="text-zinc-500">No internship applications found for the selected filters.</span>'
+              />
             </div>
           )}
         </CardContent>

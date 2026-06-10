@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Eye, Filter, Loader2, NotebookPen, Trash2, X } from "lucide-react";
 
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+const agTheme = themeQuartz.withParams({
+  backgroundColor: "#18181b",
+  foregroundColor: "#e4e4e7",
+  headerBackgroundColor: "#18181b",
+  rowHoverColor: "#27272a",
+  borderColor: "#27272a",
+  headerTextColor: "#ffffff",
+});
 
 type SummerSchoolStudentRegistration = {
   id: number;
@@ -331,6 +336,8 @@ export default function SummerSchoolRegistrations() {
   const [selectedRegistration, setSelectedRegistration] =
     useState<SummerSchoolStudentRegistration | null>(null);
   const [deletingRegistrationId, setDeletingRegistrationId] = useState<number | null>(null);
+  const [quickFilterText, setQuickFilterText] = useState("");
+  const gridRef = useRef<AgGridReact>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -723,6 +730,124 @@ export default function SummerSchoolRegistrations() {
     }
   };
 
+  const colDefs = useMemo<ColDef<SummerSchoolStudentRegistration>[]>(() => [
+    {
+      headerName: "Student",
+      field: "full_name",
+      flex: 1.5,
+      minWidth: 200,
+      filterValueGetter: (p: any) => p.data ? `${p.data.full_name} ${p.data.email} ${p.data.dob || ""} ${p.data.gender || ""}` : "",
+      cellRenderer: (params: any) => {
+        const r = params.data;
+        if (!r) return null;
+        return (
+          <div className="flex flex-col justify-center h-full">
+            <span className="text-zinc-100 font-medium">{r.full_name || "-"}</span>
+            <span className="text-zinc-400 text-xs">{r.email || "-"}</span>
+            <span className="text-zinc-500 text-xs">DOB: {r.dob || "-"}{r.gender ? ` | ${r.gender}` : ""}</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Academic",
+      field: "grade",
+      flex: 1.5,
+      minWidth: 180,
+      filterValueGetter: (p: any) => p.data ? `${p.data.grade} ${p.data.school} ${p.data.board}` : "",
+      cellRenderer: (params: any) => {
+        const r = params.data;
+        if (!r) return null;
+        return (
+          <div className="flex flex-col justify-center h-full">
+            <span className="text-zinc-300 text-sm">{r.grade || "-"}</span>
+            <span className="text-zinc-400 text-xs truncate max-w-[200px]" title={r.school || "-"}>{r.school || "-"}</span>
+            <span className="text-zinc-500 text-xs">Board: {r.board || "-"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Batch / Nationality",
+      field: "batch",
+      flex: 1.5,
+      minWidth: 180,
+      filterValueGetter: (p: any) => p.data ? `${p.data.batch} ${p.data.nationality} ${p.data.category}` : "",
+      cellRenderer: (params: any) => {
+        const r = params.data;
+        if (!r) return null;
+        return (
+          <div className="flex flex-col justify-center h-full">
+            <span className="text-zinc-300 text-sm">{r.batch || "-"}</span>
+            <span className="text-zinc-500 text-xs">{r.nationality || "-"}</span>
+            <span className="text-zinc-500 text-xs">Category: {r.category || "-"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Payment",
+      field: "payment_status",
+      flex: 2,
+      minWidth: 220,
+      filterValueGetter: (p: any) => p.data ? `${p.data.payment_status || ""} ${p.data.payment_mode || ""} ${p.data.razorpay_order_id || ""} ${p.data.razorpay_payment_id || ""}` : "",
+      cellRenderer: (params: any) => {
+        const r = params.data;
+        if (!r) return null;
+        return (
+          <div className="flex flex-col justify-center h-full gap-0.5">
+            <span className="text-zinc-300 text-sm">Amount: {formatPayment(r.payment_amount, r.payment_currency)}</span>
+            <span className={`inline-flex w-fit rounded border px-1.5 py-0.5 text-xs font-medium ${getPaymentBadgeClass(r.payment_status)}`}>
+              {(r.payment_status || "not available").toUpperCase()}
+            </span>
+            <span className="text-zinc-500 text-xs">Mode: {r.payment_mode || "-"}</span>
+            <span className="text-zinc-500 text-xs break-all">Order: {r.razorpay_order_id || "-"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Actions / Submitted",
+      sortable: false,
+      filter: false,
+      pinned: "right",
+      width: 220,
+      cellRenderer: (params: any) => {
+        const r = params.data;
+        if (!r) return null;
+        const deleting = deletingRegistrationId === r.id;
+        return (
+          <div className="flex flex-col justify-center h-full gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleViewRegistration(r)}
+                aria-label="View registration"
+                title="View complete registration details"
+                className="rounded-md bg-cyan-500 p-1.5 text-black transition hover:bg-cyan-400"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDeleteRegistration(r)}
+                aria-label="Delete registration"
+                title="Delete this registration"
+                disabled={deleting}
+                className="rounded-md bg-rose-500 p-1.5 text-black transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+            <span className="text-zinc-500 text-xs">{formatSubmittedDateTime(r.created_at)}</span>
+          </div>
+        );
+      },
+    },
+  ], [deletingRegistrationId]);
+
+  const defaultColDef = useMemo<ColDef>(() => ({ sortable: true, filter: true, resizable: true }), []);
+
   return (
     <div className="min-h-screen container mx-auto max-w-8xl text-zinc-100">
       <div className="flex flex-col gap-4 pt-3 pb-5 mb-6 border-b border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
@@ -841,7 +966,14 @@ export default function SummerSchoolRegistrations() {
               <NotebookPen className="h-4 w-4 text-blue-400" />
               Student Registrations
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                type="text"
+                placeholder="Search registrations..."
+                value={quickFilterText}
+                onChange={(e) => setQuickFilterText(e.target.value)}
+                className="w-full sm:w-56 rounded-md border border-zinc-700 bg-zinc-950/50 px-3 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-blue-500 focus:outline-none"
+              />
               <Button
                 variant="ghost"
                 size="sm"
@@ -969,134 +1101,28 @@ export default function SummerSchoolRegistrations() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="w-full overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-zinc-800">
-                    <TableHead className="text-white min-w-[220px]">Student</TableHead>
-                    <TableHead className="text-white min-w-[240px]">Academic</TableHead>
-                    <TableHead className="text-white min-w-[200px]">Batch / Nationality</TableHead>
-                    <TableHead className="text-white min-w-[260px]">Payment</TableHead>
-                    <TableHead className="text-white min-w-[220px]">Actions / Submitted</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRegistrations.length === 0 ? (
-                    <TableRow className="border-zinc-800">
-                      <TableCell
-                        colSpan={5}
-                        className="text-center text-zinc-400 py-8"
-                      >
-                        {selectedClassFilter || selectedNationalityFilter || emailSearch.trim()
-                          ? "No registrations found for the selected filters."
-                          : "No summer school student registrations found."}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredRegistrations.map((registration) => (
-                      <TableRow
-                        key={`${registration.id}-${registration.email}`}
-                        className="border-zinc-800"
-                      >
-                        <TableCell className="align-top">
-                          <div className="flex flex-col">
-                            <span className="text-zinc-100 font-medium">
-                              {registration.full_name || "-"}
-                            </span>
-                            <span className="text-zinc-400 text-xs">
-                              {registration.email || "-"}
-                            </span>
-                            <span className="text-zinc-500 text-xs mt-1">
-                              DOB: {registration.dob || "-"}
-                              {registration.gender ? ` | ${registration.gender}` : ""}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <div className="flex flex-col text-zinc-300 text-sm">
-                            <span>{registration.grade || "-"}</span>
-                            <span
-                              className="max-w-[220px] truncate"
-                              title={registration.school || "-"}
-                            >
-                              {registration.school || "-"}
-                            </span>
-                            <span className="text-zinc-500">
-                              Board: {registration.board || "-"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <div className="flex flex-col text-zinc-300 text-sm">
-                            <span>{registration.batch || "-"}</span>
-                            <span className="text-zinc-500">
-                              {registration.nationality || "-"}
-                            </span>
-                            <span className="text-zinc-500">
-                              Category: {registration.category || "-"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <div className="flex flex-col gap-1 text-zinc-300 text-sm">
-                            <span>
-                              Amount: {formatPayment(registration.payment_amount, registration.payment_currency)}
-                            </span>
-                            <div>
-                              <Badge className={getPaymentBadgeClass(registration.payment_status)}>
-                                {(registration.payment_status || "not available").toUpperCase()}
-                              </Badge>
-                            </div>
-                            <span className="text-zinc-500 text-xs">
-                              Mode: {registration.payment_mode || "-"}
-                            </span>
-                            <span className="text-zinc-500 text-xs break-all">
-                              Order: {registration.razorpay_order_id || "-"}
-                            </span>
-                            <span className="text-zinc-500 text-xs break-all">
-                              Payment: {registration.razorpay_payment_id || "-"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-zinc-400 align-top">
-                          <div className="flex flex-col gap-2 text-sm">
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => handleViewRegistration(registration)}
-                                aria-label="View registration"
-                                title="View complete registration details"
-                                className="rounded-md bg-cyan-500 p-1.5 text-black transition hover:bg-cyan-400"
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  void handleDeleteRegistration(registration);
-                                }}
-                                aria-label="Delete registration"
-                                title="Delete this registration"
-                                disabled={deletingRegistrationId === registration.id}
-                                className="rounded-md bg-rose-500 p-1.5 text-black transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                {deletingRegistrationId === registration.id ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                )}
-                              </button>
-                            </div>
-                            <span className="text-zinc-500">
-                              {formatSubmittedDateTime(registration.created_at)}
-                            </span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+            <div className="h-[600px] w-full rounded-lg overflow-hidden border border-zinc-800">
+              <AgGridReact
+                ref={gridRef}
+                theme={agTheme}
+                rowData={filteredRegistrations}
+                columnDefs={colDefs}
+                defaultColDef={defaultColDef}
+                rowHeight={88}
+                headerHeight={48}
+                suppressCellFocus={true}
+                enableCellTextSelection={true}
+                quickFilterText={quickFilterText}
+                rowSelection={{ mode: "multiRow" }}
+                pagination={true}
+                paginationPageSize={15}
+                paginationPageSizeSelector={[15, 30, 50, 100]}
+                overlayNoRowsTemplate={`<span class="text-zinc-500">${
+                  selectedClassFilter || selectedNationalityFilter || emailSearch.trim()
+                    ? "No registrations found for the selected filters."
+                    : "No summer school student registrations found."
+                }</span>`}
+              />
             </div>
           )}
         </CardContent>

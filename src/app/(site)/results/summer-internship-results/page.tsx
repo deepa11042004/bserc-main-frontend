@@ -31,7 +31,8 @@ interface ApiResponse {
 // --- Constants ---
 const ITEMS_PER_PAGE = 10;
 const DEBOUNCE_DELAY = 300;
-const SELECTION_CUTOFF = 50.7;
+const SELECTION_CUTOFF = 30.02;
+const PASSING_CUTOFF = 30.02;
 
 // --- API Cache ---
 let cachedData: ResultItem[] | null = null;
@@ -47,18 +48,19 @@ function toNumericScore(value: string | number): number {
 }
 
 function normalizeResults(raw: RawResultItem[]): ResultItem[] {
-  return raw.map((item, index) => {
-    const score = toNumericScore(item["Total_Marks"]);
-
-    return {
+  return raw
+    .map((item) => ({
       registrationId: String(item["Enrolment.No"] || "").trim(),
       name: String(item["Name"] || "").trim(),
       institute: String(item["institution_name"] || "").trim(),
-      score,
+      score: toNumericScore(item["Total_Marks"]),
+    }))
+    .filter((item) => item.score >= PASSING_CUTOFF)
+    .map((item, index) => ({
+      ...item,
       rank: index + 1,
-      selected: score >= SELECTION_CUTOFF,
-    };
-  });
+      selected: item.score >= SELECTION_CUTOFF,
+    }));
 }
 
 // --- API Simulation ---
@@ -149,7 +151,7 @@ const AnnouncementCard = memo(() => (
       Cut-off for selection:
     </h5>
     <p className="text-gray-400">
-      The candidate placed last in the merit list has secured 50.70 marks. This
+      The candidate placed last in the merit list has secured 30.02 marks. This
       is the minimum qualifying score for direct selection in this examination.
     </p>
     <h5 className="mt-6 text-blue-500 font-semibold text-lg">
@@ -157,7 +159,7 @@ const AnnouncementCard = memo(() => (
     </h5>
     <ul className="text-gray-400 list-disc pl-5 space-y-2 mt-2">
       <li>
-        Candidates who scored below 50.70 marks but are still interested in the
+        Candidates who scored below 30.02 marks but are still interested in the
         program may apply through the lateral entry process (details will be
         shared separately).
       </li>

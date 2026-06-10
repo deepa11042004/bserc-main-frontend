@@ -61,7 +61,7 @@ export default function Navbar() {
           </div>
         </div>
         <div className="w-full bg-indigo-900 text-white text-center px-4 py-2 text-sm sm:text-base flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
-          <span className="font-semibold">📢 Offer letters will be shared on your registered email address on 1st June 2026</span>
+          <span className="font-semibold">📢 Offer letters will be shared on your registered email address on 16th June 2026</span>
         </div>
         {/* <div className="w-full bg-[#DC2626] text-white text-center px-4 py-2 text-sm sm:text-base flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
           <span className="font-semibold">📢 Registration via the examination is closed for all 1,150 seats. Applicants who still wish to enroll may apply through the Lateral Entry route. <Link href="/bsercinternship/registration-lateral" prefetch={false}><u className="underline text-indigo-400">Apply here</u></Link></span>
