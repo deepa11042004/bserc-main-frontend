@@ -80,6 +80,12 @@ const NAV_ITEMS: {
         href: "/results/winter-internship-results",
         external: false,
       },
+      {
+        type: "link",
+        label: "Def-Space Summer Internship Results 2026",
+        href: "/results/summer-internship-results",
+        external: false,
+      },
     ],
   },
 
@@ -326,7 +332,7 @@ export default function Navbar() {
           </a>
         </div> */}
         <div className="w-full bg-indigo-900 text-white text-center px-4 py-2 text-sm sm:text-base flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
-          <span className="font-semibold">📢 Admit cards and offer letters will be shared on your registered email address on 1st June 2026</span>
+          <span className="font-semibold">📢 Offer letters will be shared on your registered email address on 1st June 2026</span>
         </div>
         <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-[70px]">
           {/* Logo Left */}

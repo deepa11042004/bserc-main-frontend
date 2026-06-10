@@ -1,21 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { ArrowLeft, Download, Eye, Filter, Loader2, Trash2, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/Button";
 import { formatDateTime } from "@/lib/formatDate";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+const agTheme = themeQuartz.withParams({
+  backgroundColor: "#18181b",
+  foregroundColor: "#e4e4e7",
+  headerBackgroundColor: "#18181b",
+  rowHoverColor: "#27272a",
+  borderColor: "#27272a",
+  headerTextColor: "#ffffff",
+});
 
 type Participant = {
   id: number;
@@ -200,6 +206,8 @@ export default function AdminParticipantsPage() {
   const [emailSearch, setEmailSearch] = useState("");
   const [deletingParticipantId, setDeletingParticipantId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const gridRef = useRef<AgGridReact>(null);
+  const [quickFilterText, setQuickFilterText] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -482,7 +490,33 @@ export default function AdminParticipantsPage() {
       return;
     }
 
-    if (filteredParticipantRecords.length === 0) {
+    let recordsToExport = filteredParticipantRecords;
+
+    if (gridRef.current && gridRef.current.api) {
+      const selectedNodes = gridRef.current.api.getSelectedNodes();
+      
+      if (selectedNodes.length > 0) {
+        const selectedIds = new Set(selectedNodes.map(node => node.data.id));
+        recordsToExport = filteredParticipantRecords.filter(record => {
+          const recordId = getRecordId(record);
+          return recordId !== null && selectedIds.has(recordId);
+        });
+      } else {
+        const visibleIds = new Set();
+        gridRef.current.api.forEachNodeAfterFilterAndSort((node) => {
+          if (node.data && node.data.id) {
+            visibleIds.add(node.data.id);
+          }
+        });
+        
+        recordsToExport = filteredParticipantRecords.filter(record => {
+          const recordId = getRecordId(record);
+          return recordId !== null && visibleIds.has(recordId);
+        });
+      }
+    }
+
+    if (recordsToExport.length === 0) {
       const hasActiveFilters =
         Boolean(selectedWorkshopFilter)
         || Boolean(selectedPaymentStatusFilter)
@@ -502,7 +536,7 @@ export default function AdminParticipantsPage() {
     try {
       const XLSX = await import("xlsx");
 
-      const { headers, rows } = buildDynamicExportRows(filteredParticipantRecords);
+      const { headers, rows } = buildDynamicExportRows(recordsToExport);
 
       if (rows.length === 0) {
         setError("No participants available to export.");
@@ -563,7 +597,14 @@ export default function AdminParticipantsPage() {
               <Users className="h-4 w-4 text-blue-400" />
               Participants
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              <input
+                type="text"
+                placeholder="Search across all columns..."
+                value={quickFilterText}
+                onChange={(e) => setQuickFilterText(e.target.value)}
+                className="w-full sm:w-64 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
               <Button
                 variant="ghost"
                 size="sm"
@@ -695,100 +736,160 @@ export default function AdminParticipantsPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-zinc-800">
-                  <TableHead className="text-white">ID</TableHead>
-                  <TableHead className="text-white">Name</TableHead>
-                  <TableHead className="text-white">Workshop</TableHead>
-                  <TableHead className="text-white">Payment</TableHead>
-                  <TableHead className="text-white">Registered At</TableHead>
-                  <TableHead className="text-white">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredParticipants.length === 0 ? (
-                  <TableRow className="border-zinc-800">
-                    <TableCell
-                      colSpan={6}
-                      className="py-8 text-center text-zinc-500"
-                    >
-                      {participants.length === 0
-                        ? "No participants found."
-                        : "No participants found for the selected filters."}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredParticipants.map((participant) => {
-                    const registeredAt = formatDateTime(participant.created_at);
-
-                    return (
-                      <TableRow key={participant.id} className="border-zinc-800">
-                        <TableCell className="text-zinc-300">{participant.id}</TableCell>
-                        <TableCell className="text-zinc-200">
-                          <div className="flex flex-col gap-1 text-sm">
-                            <span className="font-medium text-zinc-100">{participant.full_name}</span>
-                            <span className="text-zinc-400 text-xs">{participant.contact_number}</span>
-                            <span className="text-zinc-500 text-xs">{participant.email}</span>
+            <div className="h-[600px] w-full">
+              <AgGridReact
+                ref={gridRef}
+                theme={agTheme}
+                rowData={filteredParticipants}
+                columnDefs={[
+                  {
+                    headerName: "ID",
+                    field: "id",
+                    width: 110,
+                    filter: 'agNumberColumnFilter',
+                    headerCheckboxSelection: true,
+                    checkboxSelection: true,
+                  },
+                  {
+                    headerName: "Name",
+                    field: "full_name",
+                    filterValueGetter: (p: any) => p.data ? `${p.data.full_name || ""} ${p.data.contact_number || ""} ${p.data.email || ""}` : "",
+                    flex: 1.5,
+                    minWidth: 250,
+                    cellRenderer: (params: any) => {
+                      const participant = params.data;
+                      if (!participant) return null;
+                      return (
+                        <div className="flex flex-col justify-center h-full gap-0.5 text-sm py-2 leading-tight">
+                          <span className="font-medium text-zinc-100">{participant.full_name}</span>
+                          <span className="text-zinc-400 text-xs">{participant.contact_number}</span>
+                          <span className="text-zinc-500 text-xs">{participant.email}</span>
+                        </div>
+                      );
+                    }
+                  },
+                  {
+                    headerName: "Workshop",
+                    field: "workshop_title",
+                    flex: 1.5,
+                    minWidth: 200,
+                    cellRenderer: (params: any) => {
+                       const participant = params.data;
+                       if (!participant) return null;
+                       return (
+                          <div className="flex flex-col justify-center h-full">
+                             <span
+                               className="block max-w-[240px] truncate text-zinc-300"
+                               title={participant.workshop_title || "-"}
+                             >
+                               {participant.workshop_title || "-"}
+                             </span>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-zinc-300">
-                          <span
-                            className="block max-w-[240px] truncate"
-                            title={participant.workshop_title || "-"}
-                          >
-                            {participant.workshop_title || "-"}
+                       );
+                    }
+                  },
+                  {
+                    headerName: "Payment",
+                    field: "payment_status",
+                    filterValueGetter: (p: any) => p.data ? `${p.data.payment_status || ""} ${p.data.razorpay_payment_id || ""}` : "",
+                    flex: 1,
+                    minWidth: 200,
+                    cellRenderer: (params: any) => {
+                      const participant = params.data;
+                      if (!participant) return null;
+                      
+                      const badgeClasses = getPaymentBadgeClasses(participant.payment_status);
+                      return (
+                        <div className="flex flex-col justify-center h-full gap-1.5 text-sm py-2">
+                          <span className="font-medium text-zinc-100">
+                            Amount: {formatCurrency(participant.payment_amount)}
                           </span>
-                        </TableCell>
-                        <TableCell className="text-zinc-300">
-                          <div className="flex flex-col gap-2 text-sm text-zinc-300">
-                            <span className="font-medium text-zinc-100">
-                              Amount: {formatCurrency(participant.payment_amount)}
-                            </span>
-                            <Badge className={getPaymentBadgeClasses(participant.payment_status)}>
+                          <div>
+                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold transition-colors ${badgeClasses}`}>
                               {participant.payment_status || "-"}
-                            </Badge>
-                            <span className="text-zinc-500 text-xs">
-                              Payment ID: {participant.razorpay_payment_id || "-"}
                             </span>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-zinc-300 whitespace-nowrap">
-                          {registeredAt}
-                        </TableCell>
-                        <TableCell className="text-zinc-300">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              title="View participant details"
-                              onClick={() => handleViewParticipant(participant)}
-                              className="rounded-md bg-cyan-500 p-1.5 text-black transition hover:bg-cyan-400"
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              title="Delete participant"
-                              onClick={() => {
-                                void handleDeleteParticipant(participant);
-                              }}
-                              disabled={deletingParticipantId === participant.id}
-                              className="rounded-md bg-rose-500 p-1.5 text-black transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              {deletingParticipantId === participant.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-3.5 w-3.5" />
-                              )}
-                            </button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+                          <span className="text-zinc-500 text-xs">
+                            Payment ID: {participant.razorpay_payment_id || "-"}
+                          </span>
+                        </div>
+                      );
+                    }
+                  },
+                  {
+                    headerName: "Registered At",
+                    field: "created_at",
+                    filter: 'agDateColumnFilter',
+                    filterParams: {
+                      comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
+                        if (!cellValue) return -1;
+                        const cellDate = new Date(cellValue);
+                        cellDate.setHours(0, 0, 0, 0);
+                        if (cellDate.getTime() === filterLocalDateAtMidnight.getTime()) return 0;
+                        if (cellDate < filterLocalDateAtMidnight) return -1;
+                        if (cellDate > filterLocalDateAtMidnight) return 1;
+                        return 0;
+                      }
+                    },
+                    width: 180,
+                    valueFormatter: (params: any) => formatDateTime(params.value)
+                  },
+                  {
+                    headerName: "Actions",
+                    width: 150,
+                    sortable: false,
+                    filter: false,
+                    pinned: "right",
+                    cellRenderer: (params: any) => {
+                      const participant = params.data;
+                      if (!participant) return null;
+                      return (
+                        <div className="flex items-center gap-2 h-full">
+                          <button
+                            type="button"
+                            title="View participant details"
+                            onClick={() => handleViewParticipant(participant)}
+                            className="rounded-md bg-cyan-500 p-1.5 text-black transition hover:bg-cyan-400"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Delete participant"
+                            onClick={() => {
+                              void handleDeleteParticipant(participant);
+                            }}
+                            disabled={deletingParticipantId === participant.id}
+                            className="rounded-md bg-rose-500 p-1.5 text-black transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingParticipantId === participant.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    }
+                  }
+                ]}
+                defaultColDef={{
+                  sortable: true,
+                  filter: true,
+                  resizable: true,
+                }}
+                rowHeight={90}
+                headerHeight={48}
+                suppressCellFocus={true}
+                enableCellTextSelection={true}
+                quickFilterText={quickFilterText}
+                rowSelection={{ mode: 'multiRow' }}
+                overlayNoRowsTemplate='<span class="text-zinc-500">No participants found.</span>'
+                pagination={true}
+                paginationPageSize={10}
+                paginationPageSizeSelector={[10, 20, 50, 100]}
+              />
+            </div>
           )}
         </CardContent>
       </Card>
