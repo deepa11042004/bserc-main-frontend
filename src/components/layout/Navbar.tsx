@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X, ChevronDown, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import StudentLoginButton from "./StudentLoginButton";
@@ -262,6 +262,19 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [openNested, setOpenNested] = useState<string | null>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(102);
+
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setHeaderHeight(entry.target.getBoundingClientRect().height);
+      }
+    });
+    observer.observe(headerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -291,7 +304,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="w-full bg-black border-b border-white/5 sticky top-0 z-[60] backdrop-blur-md">
+      <header ref={headerRef} className="w-full bg-black border-b border-white/5 sticky top-0 z-[60] backdrop-blur-md">
         <div className="w-full block bg-orange-600 text-white text-center px-4 py-2 text-sm sm:text-base font-semibold transition-colors">
           <span>Apply for def-space summer internship </span>
           <Link
@@ -407,7 +420,10 @@ export default function Navbar() {
             className="lg:hidden fixed inset-0 z-[58] bg-black/60"
             onClick={closeAll}
           />
-          <div className="lg:hidden fixed top-[102px] left-0 right-0 bottom-0 z-[59] bg-[#0a0c16] overflow-y-auto">
+          <div 
+            className="lg:hidden fixed left-0 right-0 bottom-0 z-[59] bg-[#0a0c16] overflow-y-auto"
+            style={{ top: `${headerHeight}px` }}
+          >
             <ul className="flex flex-col text-[14px] font-medium text-gray-300 pb-10">
               {NAV_ITEMS.map((item) =>
                 item.href ? (
